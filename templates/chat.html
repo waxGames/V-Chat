@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ chat_title }} - AI Chat</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    .message-content {
+      max-width: min(80%, 600px);
+      word-wrap: break-word;
+    }
+    .user-message { margin-left: auto; }
+    .ai-message { margin-right: auto; }
+    .loading-dots {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+    
+    .loading-dots div {
+      width: 8px;
+      height: 8px;
+      background-color: #4B5563;
+      border-radius: 50%;
+      animation: fadeInOut 1.4s infinite ease-in-out both;
+    }
+    
+    .loading-dots div:nth-child(1) {
+      animation-delay: -0.32s;
+    }
+    
+    .loading-dots div:nth-child(2) {
+      animation-delay: -0.16s;
+    }
+    
+    @keyframes fadeInOut {
+      0%, 80%, 100% { 
+        opacity: 0;
+        transform: scale(0.8);
+      }
+      40% { 
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+    .disabled-ui {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+    
+    .submit-button {
+      position: relative;
+      min-width: 100px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .submit-button:disabled {
+      background-color: #4B5563 !important;
+      cursor: not-allowed;
+    }
+
+    .submit-button .loading-dots {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    .submit-button:disabled .loading-dots {
+      display: flex;
+    }
+
+    .submit-button:disabled .button-text {
+      display: none !important;
+    }
+
+    .submit-button .loading-dots div {
+      width: 6px;
+      height: 6px;
+      margin: 0 2px;
+      background-color: white;
+      border-radius: 50%;
+      animation: bounce 0.6s cubic-bezier(0.4, 0, 0.2, 1) infinite alternate;
+    }
+
+    .submit-button .loading-dots div:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .submit-button .loading-dots div:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
+    @keyframes bounce {
+      from {
+        transform: translateY(0) scale(1);
+        opacity: 0.5;
+      }
+      to {
+        transform: translateY(-4px) scale(1.2);
+        opacity: 1;
+      }
+    }
+  </style>
+</head>
+<body class="bg-gray-100 h-screen flex">
+  <div id="sidebar" class="w-64 bg-gray-800 text-white p-4 flex flex-col h-full">
+    <button id="newChatBtn" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded mb-4 flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
+      </svg>
+      New Chat
+    </button>
+    <div class="flex-1 overflow-y-auto">
+        <h2 class="text-gray-400 uppercase text-xs font-semibold mb-2">CHAT HISTORY</h2>
+        <div id="chatList">
+            {% if chats %}
+                {% for chat_id, chat in chats %}
+                <div class="flex items-center justify-between {% if chat_id == request.view_args.chat_id %}bg-gray-700{% else %}bg-gray-800{% endif %} hover:bg-gray-700 rounded mb-1 px-1 w-full">
+                    <a href="/chat/{{ chat_id }}" class="block py-2 px-2 truncate flex-grow">
+                        {{ chat.title }}
+                    </a>
+                    <div class="relative">
+                        <button class="chat-menu-btn text-gray-300 hover:text-white px-2 py-1 focus:outline-none" data-chat-id="{{ chat_id }}">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                            </svg>
+                        </button>
+                        <div class="chat-menu hidden absolute right-0 mt-2 w-48 bg-gray-800 rounded-md shadow-lg z-10">
+                            <div class="py-1">
+                                <button onclick="renameChat('{{ chat_id }}')" class="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">
+                                    Yeniden Adlandır
+                                </button>
+                                <button onclick="deleteChat('{{ chat_id }}')" class="block w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-700">
+                                    Sil
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-gray-500 text-sm italic">No chats yet</p>
+            {% endif %}
+        </div>
+    </div>
+  </div>
+
+  <div class="flex-1 flex flex-col h-full">
+    <div class="bg-gray-800 border-b border-gray-700 p-3">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center">
+          <label for="modelSelector" class="text-white mr-2">Select model:</label>
+          <select id="modelSelector" class="bg-gray-700 text-white rounded px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <optgroup label="DeepSeek Models">
+              <option value="deepseek-r1:1.5b">DeepSeek 1.5b</option>
+              <option value="deepseek-r1:7b">DeepSeek 7b</option>
+              <option value="deepseek-r1:8b">DeepSeek 8b</option>
+              <option value="deepseek-r1:14b">DeepSeek 14b</option>
+              <option value="deepseek-r1:32b">DeepSeek 32b</option>
+              <option value="deepseek-r1:70b">DeepSeek 70b</option>
+              <option value="deepseek-r1:671b">DeepSeek 671b</option>
+            </optgroup>
+            <optgroup label="Qwen Models">
+              <option value="qwen3:latest">Qwen3 Latest</option>
+              <option value="qwen3:0.6b">Qwen3 0.6b</option>
+              <option value="qwen3:1.7b">Qwen3 1.7b</option>
+              <option value="qwen3:4b">Qwen3 4b</option>
+              <option value="qwen3:8b">Qwen3 8b</option>
+              <option value="qwen3:14b">Qwen3 14b</option>
+              <option value="qwen3:30b">Qwen3 30b</option>
+              <option value="qwen3:32b">Qwen3 32b</option>
+              <option value="qwen3:235b">Qwen3 235b</option>
+              <option value="qwen2.5vl:latest">Qwen2.5vl Latest</option>
+              <option value="qwen2.5vl:3b">Qwen2.5vl 3b</option>
+              <option value="qwen2.5vl:7b">Qwen2.5vl 7b</option>
+              <option value="qwen2.5vl:32b">Qwen2.5vl 32b</option>
+              <option value="qwen2.5vl:72b">Qwen2.5vl 72b</option>
+            </optgroup>
+            <optgroup label="Llama Models">
+              <option value="llama3.3:latest">Llama 3.3 Latest</option>
+              <option value="llama3.3:70b">Llama 3.3 70b</option>
+            </optgroup>
+            <optgroup label="Gemma Models">
+              <option value="gemma3:latest">Gemma3 Latest</option>
+              <option value="gemma3:1b">Gemma3 1b</option>
+              <option value="gemma3:4b">Gemma3 4b</option>
+              <option value="gemma3:12b">Gemma3 12b</option>
+              <option value="gemma3:27b">Gemma3 27b</option>
+            </optgroup>
+            <optgroup label="Phi Models">
+              <option value="phi4:latest">Phi4 Latest</option>
+              <option value="phi4:14b">Phi4 14b</option>
+            </optgroup>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white border-b border-gray-200 p-4 flex justify-between items-center">
+      <h1 class="text-xl font-semibold text-gray-800">{{ chat_title }}</h1>
+      <div class="flex space-x-2">
+        <button id="renameChatButton" class="text-gray-600 hover:text-gray-800">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          </svg>
+        </button>
+        <button id="deleteChatBtn" class="text-red-600 hover:text-red-800">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div id="messages" class="flex-1 overflow-y-auto p-4 space-y-4">
+      {% for message in messages %}
+      <div class="{% if message.sender == 'user' %}user-message flex justify-end{% else %}ai-message flex justify-start{% endif %}">
+        <div class="message-content {% if message.sender == 'user' %}bg-blue-600 text-white{% else %}bg-white border border-gray-200{% endif %} rounded-lg p-3">
+          {% if message.get('canceled') %}
+          <div class="prose text-sm text-gray-500 italic">Canceled</div>
+          {% else %}
+          {% if message.sender == 'ai' %}
+          {% endif %}
+          <div class="prose">{{ message.content|safe }}</div>
+          {% if message.get('has_think') %}
+          <div class="mt-2 pt-2 border-t border-gray-200">
+            <button class="think-toggle-btn text-xs text-blue-600 hover:text-blue-800 flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Show Thinking Process
+            </button>
+            <div class="think-content hidden mt-2 p-2 bg-gray-100 rounded text-sm">
+              <div class="font-semibold mb-1 text-gray-700">Think:</div>
+              {{ message.think|safe }}
+            </div>
+          </div>
+          {% endif %}
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="bg-white border-t border-gray-200 p-4">
+      <form id="messageForm" class="flex space-x-2">
+        <input type="text" id="messageInput" placeholder="Type a message..." maxlength="2000"
+          class="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <button type="submit" id="submitButton"
+          class="submit-button bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center justify-center">
+          <span class="button-text">Send</span>
+          <div class="loading-dots">
+            <div></div>
+            <div></div>
+            <div></div>
+          </div>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div id="chatContextMenu" class="hidden absolute bg-gray-700 rounded shadow-lg py-1 z-50" style="min-width: 150px;">
+    <button id="renameChatBtn" class="w-full text-left px-4 py-2 text-white hover:bg-gray-600 flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+      </svg>
+      Rename
+    </button>
+    <button id="deleteChatBtnContext" class="w-full text-left px-4 py-2 text-white hover:bg-gray-600 flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+      </svg>
+      Delete
+    </button>
+  </div>
+  
+  <div id="renameDialog" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-6 w-80">
+      <h3 class="text-lg font-semibold mb-4">Rename Chat</h3>
+      <input type="text" id="newChatTitle" class="w-full border border-gray-300 rounded px-3 py-2 mb-4" placeholder="New title">
+      <div class="flex justify-end space-x-2">
+        <button id="cancelRenameBtn" class="px-4 py-2 border border-gray-300 rounded hover:bg-gray-100">Cancel</button>
+        <button id="confirmRenameBtn" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Save</button>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    let isWaiting = false;
+    let abortController = null;
+    let currentChatId = null;
+    let currentModel = localStorage.getItem('selectedModel') || 'deepseek-r1:7b';
+    let typingAnimation = null;
+
+    document.addEventListener('DOMContentLoaded', function() {
+      const modelSelector = document.getElementById('modelSelector');
+      const messageForm = document.getElementById('messageForm');
+      const messageInput = document.getElementById('messageInput');
+      const submitButton = document.getElementById('submitButton');
+      const buttonText = document.getElementById('buttonText');
+      const messagesContainer = document.getElementById('messages');
+      
+      currentChatId = window.location.pathname.split('/').pop();
+      
+      markLoadedModelsAndConfigureSelector();
+      
+      messageForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        if (isWaiting) return;
+        
+        const message = messageInput.value.trim();
+        if (!message) return;
+        
+        isWaiting = true;
+        messageInput.disabled = true;
+        submitButton.disabled = true;
+        
+        appendMessage('user', message);
+        messageInput.value = '';
+        
+        startTypingAnimation();
+        
+        try {
+          const response = await fetch('/chat/' + currentChatId + '/send', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                message: message,
+                model: currentModel
+            })
+          });
+          
+          const data = await response.json();
+          
+          if (!data.success) {
+            throw new Error(data.error || 'An error occurred');
+          }
+          
+          stopTypingAnimation();
+          
+          if (data.has_think) {
+            appendMessage('ai', data.response, data.think);
+          } else {
+            appendMessage('ai', data.response);
+          }
+          
+          if (data.chat_title) {
+            document.querySelector('h1').textContent = data.chat_title;
+          }
+          
+        } catch (error) {
+          stopTypingAnimation();
+          appendMessage('ai', `Error: ${error.message}`);
+        } finally {
+          isWaiting = false;
+          messageInput.disabled = false;
+          submitButton.disabled = false;
+        }
+      });
+      
+      submitButton.addEventListener('click', async function() {
+        if (isWaiting) {
+          try {
+            const response = await fetch('/chat/' + currentChatId + '/cancel', {
+              method: 'POST'
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+              stopTypingAnimation();
+              appendMessage('ai', 'Canceled', null, true);
+            }
+          } catch (error) {
+            console.error('Cancel error:', error);
+          }
+        }
+      });
+      
+      function startTypingAnimation() {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'message ai-message mb-4';
+        messageDiv.innerHTML = `
+          <div class="flex items-start space-x-2">
+            <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold">AI</div>
+            <div class="message-content bg-gray-100 rounded-lg p-3">
+              <div class="loading-dots">
+                <div></div>
+                <div></div>
+                <div></div>
+              </div>
+            </div>
+          </div>
+        `;
+        
+        messagesContainer.appendChild(messageDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        
+        typingAnimation = messageDiv;
+      }
+      
+      function stopTypingAnimation() {
+        if (typingAnimation) {
+          typingAnimation.remove();
+          typingAnimation = null;
+        }
+      }
+      
+      function appendMessage(sender, content, think = null, canceled = false) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `${sender}-message flex ${sender === 'user' ? 'justify-end' : 'justify-start'}`;
+        
+        let messageContent = `
+          <div class="message-content ${sender === 'user' ? 'bg-blue-600 text-white' : 'bg-white border border-gray-200'} rounded-lg p-3">
+        `;
+        
+        if (canceled) {
+          messageContent += `<div class="prose text-sm text-gray-500 italic">Canceled</div>`;
+        } else {
+          messageContent += `<div class="prose">${content}</div>`;
+        }
+        
+        messageContent += '</div>';
+        messageDiv.innerHTML = messageContent;
+        
+        messagesContainer.appendChild(messageDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      }
+
+    });
+
+    async function markLoadedModelsAndConfigureSelector() {
+        const modelSelector = document.getElementById('modelSelector');
+        if (!modelSelector) return;
+
+        let loadedModels = [];
+        try {
+            const response = await fetch('/get_ollama_models');
+            const data = await response.json();
+
+            if (data.success && data.models) {
+                loadedModels = data.models;
+                console.log('Loaded models:', loadedModels);
+            } else if (data.error) {
+                console.error('Models not loaded:', data.error);
+                const option = document.createElement('option');
+                option.value = "";
+                option.textContent = "Ollama connection error";
+                modelSelector.insertBefore(option, modelSelector.firstChild);
+                modelSelector.value = "";
+                modelSelector.disabled = true;
+                return;
+            }
+        } catch (error) {
+            console.error('Error loading models:', error);
+            const option = document.createElement('option');
+            option.value = "";
+            option.textContent = "Ollama connection error";
+            modelSelector.insertBefore(option, modelSelector.firstChild);
+            modelSelector.value = "";
+            modelSelector.disabled = true;
+            return;
+        }
+
+        const options = modelSelector.querySelectorAll('option');
+        options.forEach(option => {
+            const modelFullName = option.value;
+            const isInstalled = loadedModels.some(model => 
+                model.full_name === modelFullName && model.is_installed
+            );
+            
+            if (isInstalled) {
+                if (!option.textContent.includes('✓')) {
+                    option.textContent = option.textContent.replace(' ✗', '') + ' ✓';
+                }
+                option.classList.add('text-green-500');
+            } else {
+                if (!option.textContent.includes('✗')) {
+                    option.textContent = option.textContent.replace(' ✓', '') + ' ✗';
+                }
+                option.classList.add('text-red-500');
+            }
+        });
+
+        const savedModel = localStorage.getItem('selectedModel');
+        if (savedModel) {
+            modelSelector.value = savedModel;
+            if (modelSelector.value !== savedModel) {
+                console.warn('Saved model ', savedModel, ' not found in current model list');
+            }
+        } else {
+            const firstLoadedOption = modelSelector.querySelector('option[value]');
+            if (firstLoadedOption && firstLoadedOption.textContent.includes('✓')) {
+                modelSelector.value = firstLoadedOption.value;
+                localStorage.setItem('selectedModel', modelSelector.value);
+            } else if (options.length > 0) {
+                modelSelector.value = options[0].value;
+                localStorage.setItem('selectedModel', modelSelector.value);
+            }
+        }
+    }
+
+    document.getElementById('modelSelector').addEventListener('change', function() {
+      currentModel = this.value;
+      localStorage.setItem('selectedModel', currentModel);
+      console.log('Model changed to:', currentModel);
+    });
+
+    function updateChatList() {
+        console.log("Updating chat list...");
+        fetch('/get_chats')
+            .then(response => {
+                console.log("Response received:", response);
+                return response.json();
+            })
+            .then(data => {
+                console.log("Data received:", data);
+                const chatListElement = document.getElementById('chatList');
+                let chatListHTML = '';
+                
+                if (data.chats && data.chats.length > 0) {
+                    data.chats.forEach(chat => {
+                        const isActive = chat.id === '{{ chat_id }}';
+                        chatListHTML += `
+                            <div class="flex items-center justify-between ${isActive ? 'bg-gray-700' : 'bg-gray-800'} hover:bg-gray-700 rounded mb-1 px-1 w-full">
+                                <a href="/chat/${chat.id}" class="block py-2 px-2 truncate flex-grow">
+                                    ${chat.title}
+                                </a>
+                                <div class="relative">
+                                    <button class="chat-menu-btn text-gray-300 hover:text-white px-2 py-1 focus:outline-none" data-chat-id="${chat.id}">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                                        </svg>
+                                    </button>
+                                    <div class="chat-menu hidden absolute right-0 mt-2 w-48 bg-gray-800 rounded-md shadow-lg z-10">
+                                        <div class="py-1">
+                                            <button onclick="renameChat('${chat.id}')" class="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">
+                                                Yeniden Adlandır
+                                            </button>
+                                            <button onclick="deleteChat('${chat.id}')" class="block w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-700">
+                                                Sil
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    chatListHTML = '<p class="text-gray-500 text-sm italic">No chats yet</p>';
+                }
+                
+                chatListElement.innerHTML = chatListHTML;
+                console.log("Chat list updated");
+                
+                addChatMenuListeners();
+            })
+            .catch(error => {
+                console.error("Error updating chat list:", error);
+            });
+    }
+    
+    function addChatMenuListeners() {
+        document.querySelectorAll('.chat-menu-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                currentChatId = this.getAttribute('data-chat-id');
+                
+                const rect = this.getBoundingClientRect();
+                const contextMenu = document.getElementById('chatContextMenu');
+                contextMenu.style.top = `${rect.bottom + window.scrollY}px`;
+                contextMenu.style.left = `${rect.left + window.scrollX - 150 + rect.width}px`;
+                
+                contextMenu.classList.remove('hidden');
+            });
+        });
+    }
+    
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.chat-menu-btn') && !e.target.closest('#chatContextMenu')) {
+            document.getElementById('chatContextMenu').classList.add('hidden');
+        }
+    });
+    
+    document.getElementById('renameChatButton').addEventListener('click', function() {
+      document.getElementById('newChatTitle').value = document.querySelector('h1.text-xl').textContent.trim();
+      document.getElementById('renameDialog').classList.remove('hidden');
+    });
+
+    document.getElementById('renameChatBtn').addEventListener('click', function() {
+      document.getElementById('chatContextMenu').classList.add('hidden');
+      
+      let chatTitle = '';
+      if (currentChatId === '{{ chat_id }}') {
+        chatTitle = document.querySelector('h1.text-xl').textContent.trim();
+      } else {
+        const chatElement = document.querySelector(`.chat-menu-btn[data-chat-id="${currentChatId}"]`)
+          .closest('div').querySelector('a');
+        if (chatElement) {
+          chatTitle = chatElement.textContent.trim();
+        }
+      }
+      
+      document.getElementById('newChatTitle').value = chatTitle;
+      document.getElementById('renameDialog').classList.remove('hidden');
+    });
+
+    document.getElementById('cancelRenameBtn').addEventListener('click', function() {
+      document.getElementById('renameDialog').classList.add('hidden');
+    });
+
+    document.getElementById('confirmRenameBtn').addEventListener('click', async function() {
+      const newTitle = document.getElementById('newChatTitle').value.trim();
+      if (!newTitle) return;
+      
+      const chatIdToRename = currentChatId || '{{ chat_id }}';
+      
+      try {
+        const response = await fetch('/chat/' + chatIdToRename + '/rename', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title: newTitle })
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+          document.getElementById('renameDialog').classList.add('hidden');
+          
+          if (chatIdToRename === '{{ chat_id }}') {
+            document.title = `${newTitle} - AI Chat`;
+            document.querySelector('h1.text-xl').textContent = newTitle;
+          }
+          
+          updateChatList();
+        } else {
+          alert(data.error || 'Rename failed.');
+        }
+      } catch (error) {
+        console.error('Error renaming chat:', error);
+        alert('Error renaming chat.');
+      }
+    });
+    
+    document.getElementById('deleteChatBtnContext').addEventListener('click', async function() {
+        document.getElementById('chatContextMenu').classList.add('hidden');
+        
+        if (!confirm('Are you sure you want to delete this chat?')) return;
+        
+        try {
+            const response = await fetch('/chat/' + currentChatId + '/delete', {
+                method: 'POST'
+            });
+            
+            const data = await response.json();
+            if (data.success) {
+                if (currentChatId === '{{ chat_id }}') {
+                    window.location.href = data.redirect;
+                } else {
+                    updateChatList();
+                }
+            } else {
+                alert(data.error || 'Chat deletion failed.');
+            }
+        } catch (error) {
+            console.error('Error deleting chat:', error);
+            alert('Error deleting chat.');
+        }
+    });
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log("Page loaded, updating chat list...");
+        updateChatList();
+        setInterval(updateChatList, 2000);
+        
+        const messagesContainer = document.getElementById('messages');
+        if (messagesContainer) {
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+        
+        document.querySelectorAll('.think-toggle-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const thinkContent = this.nextElementSibling;
+                if (thinkContent.classList.contains('hidden')) {
+                    thinkContent.classList.remove('hidden');
+                    this.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Hide Thinking Process
+                    `;
+                } else {
+                    thinkContent.classList.add('hidden');
+                    this.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Show Thinking Process
+                    `;
+                }
+            });
+        });
+        
+        addChatMenuListeners();
+    });
+
+    document.getElementById('deleteChatBtn').addEventListener('click', async () => {
+      if (isWaiting) return;
+      if (!confirm('Are you sure you want to delete this chat?')) return;
+      
+      try {
+        const res = await fetch('/chat/' + '{{ chat_id }}' + '/delete', { method: 'POST' });
+        const data = await res.json();
+        if (data.success) window.location.href = data.redirect;
+      } catch {
+        alert('Chat deletion failed.');
+      }
+    });
+
+    document.getElementById('newChatBtn').addEventListener('click', async () => {
+      if (isWaiting) return;
+      try {
+        const res = await fetch('/new_chat', { method: 'POST' });
+        const data = await res.json();
+        if (data.success) window.location.href = data.redirect;
+      } catch {
+        alert('New chat creation failed.');
+      }
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+      const messagesContainer = document.getElementById('messages');
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    });
+
+    async function deleteChat(chatId) {
+        if (confirm('Bu sohbeti silmek istediğinizden emin misiniz?')) {
+            try {
+                const response = await fetch('/chat/' + chatId + '/delete', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                if (data.success) {
+                    window.location.href = data.redirect;
+                } else {
+                    alert('Sohbet silinirken bir hata oluştu: ' + data.error);
+                }
+            } catch (error) {
+                alert('Bir hata oluştu: ' + error.message);
+            }
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.chat-menu-btn').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const menu = this.nextElementSibling;
+                const allMenus = document.querySelectorAll('.chat-menu');
+                
+                allMenus.forEach(m => {
+                    if (m !== menu) m.classList.add('hidden');
+                });
+                
+                menu.classList.toggle('hidden');
+            });
+        });
+        
+        document.addEventListener('click', function() {
+            document.querySelectorAll('.chat-menu').forEach(menu => {
+                menu.classList.add('hidden');
+            });
+        });
+    });
+
+    async function renameChat(chatId) {
+        const newTitle = prompt('Yeni sohbet başlığını girin:');
+        if (newTitle && newTitle.trim()) {
+            try {
+                const response = await fetch('/chat/' + chatId + '/rename', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title: newTitle.trim() })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    alert('Başlık güncellenirken bir hata oluştu: ' + data.error);
+                }
+            } catch (error) {
+                alert('Bir hata oluştu: ' + error.message);
+            }
+        }
+    }
+  </script>
+</body>
+</html>

@@ -1,7 +1,7 @@
 from flask import Flask
-from routes import bp
-from utils import setup_environment, run_as_admin
-from config import SECRET_KEY
+from server.routes import bp
+from helpers.utils import setup_environment, run_as_admin
+from helpers.config import SECRET_KEY
 
 def create_app():
     app = Flask(__name__)

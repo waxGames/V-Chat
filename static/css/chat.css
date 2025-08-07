@@ -1,0 +1,345 @@
+:root {
+    --vscode-bg: #0d0d0d;
+    --vscode-sidebar: #0a0a0a;
+    --vscode-input: #121212;
+    --vscode-button: #151515;
+    --vscode-border: #1a1a1a;
+    --vscode-text: #ffffff;
+    --vscode-hover: #202020;
+}
+
+body, 
+.bg-white,
+.bg-gray-100,
+.bg-gray-200,
+.bg-gray-700,
+.bg-gray-800 {
+    background-color: var(--vscode-bg) !important;
+    color: var(--vscode-text) !important;
+}
+
+#messages {
+    padding: 1rem !important;
+    background-color: #0d0d0d !important;
+}
+
+.message-content {
+    max-width: min(80%, 550px);
+    word-wrap: break-word;
+    margin: 0.2rem 0;
+    padding: 0.75rem;
+    font-size: 0.9rem;
+    border-radius: 4px;
+}
+
+.user-message .message-content {
+    background-color: #1a1a1a !important;
+    border: 1px solid #2d2d2d;
+    margin-left: auto;
+}
+
+.ai-message .message-content {
+    background-color: #0d0d0d !important;
+    border: 1px solid #1a1a1a;
+    margin-right: auto;
+}
+
+.submit-button {
+    position: relative;
+    min-width: 60px !important;
+    padding: 0.3rem 0.6rem !important;
+    height: 24px !important;
+    background-color: var(--vscode-button) !important;
+    color: var(--vscode-text) !important;
+    border: 1px solid var(--vscode-border) !important;
+    font-size: 0.8rem !important;
+}
+
+.submit-button:hover {
+    background-color: var(--vscode-hover) !important;
+}
+
+#newChatBtn {
+    padding: 0.6rem 1.2rem !important;
+    height: 40px !important;
+    font-size: 1rem !important;
+    background-color: var(--vscode-button) !important;
+    color: var(--vscode-text) !important;
+    border: 2px solid var(--vscode-border) !important;
+    border-radius: 6px !important;
+    font-weight: 600 !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    transition: background 0.2s, border 0.2s;
+}
+#newChatBtn:hover {
+    background-color: var(--vscode-hover) !important;
+    border-color: #3d3d3d !important;
+}
+
+input, select, textarea {
+    background-color: var(--vscode-input) !important;
+    color: var(--vscode-text) !important;
+    border: 1px solid var(--vscode-border) !important;
+    padding: 0.3rem 0.5rem !important;
+    height: 28px !important;
+    font-size: 0.9rem !important;
+}
+
+#sidebar {
+    background-color: var(--vscode-sidebar) !important;
+    border-right: 1px solid var(--vscode-border);
+    font-size: 0.9rem;
+}
+
+#renameDialog {
+    background-color: rgba(0, 0, 0, 0.95) !important;
+}
+
+#renameDialog .bg-white {
+    background-color: var(--vscode-sidebar) !important;
+    padding: 1rem !important;
+}
+
+.chat-menu {
+    background-color: var(--vscode-sidebar) !important;
+    border: 1px solid var(--vscode-border);
+    font-size: 0.85rem;
+}
+
+.bg-blue-600,
+.hover\:bg-blue-700:hover,
+.bg-gray-100,
+.hover\:bg-gray-100:hover {
+    background-color: var(--vscode-button) !important;
+}
+
+.prose {
+    color: var(--vscode-text) !important;
+    font-size: 0.9rem;
+}
+
+.border,
+.border-gray-200,
+.border-gray-300,
+.border-t,
+.border-b {
+    border-color: var(--vscode-border) !important;
+}
+
+.flex, .flex-1, .justify-start, .justify-end {
+    background-color: transparent !important;
+}
+
+.message-wrapper {
+    margin: 0.2rem 0;
+    background-color: transparent !important;
+}
+
+.bg-white, .bg-gray-100, .bg-gray-200 {
+    background-color: var(--vscode-bg) !important;
+}
+
+.message-wrapper + .message-wrapper {
+    margin-top: 0.5rem;
+}
+
+.text-xl.font-semibold.text-gray-800,
+h1.text-xl.font-semibold {
+    color: #ffffff !important;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: #ffffff !important;
+}
+
+.text-gray-400.uppercase.text-xs.font-semibold {
+    color: #ffffff !important;
+}
+
+.bg-white.border-t {
+    padding: 1rem !important;
+    background-color: #0d0d0d !important;
+    border-top: 1px solid #2d2d2d !important;
+}
+
+input#messageInput,
+textarea#messageInput {
+    min-height: 45px !important;
+    max-height: 45px !important;
+    height: 45px !important;
+    font-size: 0.95rem !important;
+    padding: 8px 16px !important;
+    background-color: #0d0d0d !important;
+    color: #ffffff !important;
+    border: 1px solid #2d2d2d !important;
+    border-radius: 4px !important;
+    resize: none !important;
+    width: calc(100% - 100px) !important;
+    line-height: 28px !important;
+    display: flex !important;
+    align-items: center !important;
+    overflow-y: hidden !important;
+    margin: 0 !important;
+}
+
+input:focus, select:focus, textarea:focus {
+    outline: none !important;
+    border-color: #3d3d3d !important;
+    box-shadow: none !important;
+}
+
+.submit-button {
+    min-width: 80px !important;
+    height: 45px !important;
+    padding: 0.75rem 1rem !important;
+    background-color: #0d0d0d !important;
+    color: #ffffff !important;
+    border: 1px solid #2d2d2d !important;
+    font-size: 1rem !important;
+    font-weight: 500 !important;
+    border-radius: 4px !important;
+    transition: background-color 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.submit-button:hover {
+    background-color: #1a1a1a !important;
+}
+
+.submit-button:active {
+    background-color: #0d0d0d !important;
+}
+
+.submit-button:disabled {
+    background-color: #0a0a0a !important;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+#messageForm {
+    display: flex !important;
+    gap: 0.75rem !important;
+    align-items: center !important;
+    padding: 0.5rem !important;
+}
+
+.submit-button .loading-dots {
+    display: none;
+}
+
+.ai-typing .loading-dots {
+    display: flex !important;
+    gap: 4px;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+}
+
+.loading-dots .dot {
+    width: 8px;
+    height: 8px;
+    background-color: #ffffff;
+    border-radius: 50%;
+    animation: bounce 0.5s ease-in-out infinite;
+}
+
+.loading-dots .dot:nth-child(2) {
+    animation-delay: 0.1s;
+}
+
+.loading-dots .dot:nth-child(3) {
+    animation-delay: 0.2s;
+}
+
+@keyframes bounce {
+    0%, 100% {
+        transform: translateY(0);
+        opacity: 0.3;
+    }
+    50% {
+        transform: translateY(-4px);
+        opacity: 1;
+    }
+}
+
+.ai-typing {
+    display: flex;
+    justify-content: flex-start;
+    margin: 0.2rem 0;
+}
+
+.ai-typing .message-content {
+    background-color: #0d0d0d !important;
+    border: 1px solid #1a1a1a;
+    padding: 0.5rem 1rem;
+}
+
+#chatList > div.flex.items-center {
+    min-height: 28px;
+    font-size: 0.8rem;
+    border: 2px solid var(--vscode-border);
+    border-radius: 4px;
+    margin-bottom: 0.18rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    background-color: unset !important;
+    padding-top: 0.1rem;
+    padding-bottom: 0.1rem;
+    padding-left: 0.1rem;
+    padding-right: 0.1rem;
+    transition: border 0.2s, background 0.2s;
+}
+#chatList > div.flex.items-center.bg-gray-700 {
+    position: relative;
+    background-color: #2d2d2d !important;
+    border-color: #444 !important;
+    border-width: 2px;
+    box-shadow: none;
+    color: #fff !important;
+    font-weight: 700;
+    z-index: 2;
+    filter: brightness(1.18) contrast(1.08);
+}
+#chatList > div.flex.items-center.bg-gray-700 a {
+    color: #fff !important;
+    font-weight: 700;
+}
+#chatList > div.flex.items-center.bg-gray-700::before {
+    display: none;
+}
+#chatList > div.flex.items-center:hover {
+    background-color: #232323 !important;
+    border-color: #3d3d3d !important;
+}
+#chatList a {
+    font-weight: 400;
+    font-size: 0.8rem;
+    padding-top: 0.2rem;
+    padding-bottom: 0.2rem;
+}
+
+#messageForm label[for="modelSelector"] {
+    color: #b0b0b0 !important;
+    font-size: 0.85rem !important;
+    margin-right: 0.3rem !important;
+    font-weight: 500;
+    padding: 0;
+}
+#modelSelector {
+    background-color: var(--vscode-input) !important;
+    color: var(--vscode-text) !important;
+    border: 1px solid #3d3d3d !important;
+    border-radius: 4px !important;
+    font-size: 0.85rem !important;
+    height: 28px !important;
+    min-width: 80px !important;
+    max-width: 140px !important;
+    padding: 0 0.5rem !important;
+    margin-right: 0.5rem !important;
+    box-shadow: none !important;
+}
+#modelSelector:focus {
+    outline: none !important;
+    border-color: #3d3d3d !important;
+    box-shadow: none !important;
+}

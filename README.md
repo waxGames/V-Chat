@@ -1,65 +1,55 @@
 # V-Chat
 
-V-Chat is a local, multi-model chat application built with Flask. Users can chat with different AI models and manage their chat history.
+V-Chat is an AI chat application that uses the Ollama API. It is developed with the Flask web framework and offers a user-friendly interface.
 
 ## Features
-- Web interface with Flask
-- Multi-LLM (large language model) support via Ollama API
-- User-specific chat history
-- Rename, delete, and create new chats
-- Model selection and installation check
+
+- Ollama API integration
+- Multiple model support (DeepSeek, Qwen, Llama, Gemma, Phi)
+- Chat history management
+- Session management
+- Chat title editing
+- Chat deletion
+- Real-time response generation
+
+## Requirements
+
+- Python 3.8+
+- Flask
+- Requests
+- Ollama (local installation)
 
 ## Installation
 
-1. **Requirements:**
-   - Python 3.8+
-   - Ollama (Download and install from https://ollama.com/)
-
-2. **Install dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. **Start Ollama:**
-   Make sure Ollama is running in the background (default port: 11434).
-
-4. **Run the application:**
-   ```bash
-   python app.py
-   ```
-
-5. **Access from your browser:**
-   The app runs at http://localhost:5000 by default.
-
-## Project Structure
-
-```
-V-Chat-0.41/
-├── app.py                  # Main application file
-├── requirements.txt        # Python dependencies
-├── README.md               # This file
-├── bot/
-│   └── ollama_service.py   # Ollama API communication and model management
-├── database/
-│   └── database.py         # Chat history and data management
-├── helpers/
-│   ├── config.py           # Configuration and constants
-│   └── utils.py            # Utility functions
-├── server/
-│   └── routes.py           # Flask Blueprint and all routes
-├── static/
-│   ├── css/                # CSS files
-│   └── js/                 # JavaScript files
-└── templates/
-    ├── index.html          # Main page template
-    └── chat.html           # Chat page template
+1. Download and install Ollama from the [official website](https://ollama.ai/)
+2. Clone the project:
+```bash
+git clone https://github.com/waxGames/V-Chat.git
 ```
 
-## Notes
-- Your chats are stored locally and are not sent outside.
-- If the Ollama API is not running, model loading and chat features will be disabled.
-- On Windows, you may need to run as administrator (for writing to Program Files directory).
+3. Install required Python packages:
+```bash
+pip install -r requirements.txt
+```
 
-## Contribution & License
+4. Run the application:
+```bash
+python app.py
+```
 
-You can contribute by sending a pull request. For license information, see the LICENSE file.
+## Usage
+
+1. The application runs on `http://localhost:5000` by default
+2. Open the address in your browser
+3. Start a new chat or continue with your existing chats
+4. Select your desired model and type your message
+
+## Security
+
+- The application stores user data locally
+- A secure secret key is used for session management
+- Administrator rights may be required for writing to the Program Files directory
+
+## License
+
+This project is licensed under the GNU Affero General Public License v3.0.

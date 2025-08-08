@@ -1,4 +1,4 @@
-# V-Chat
+# vChat
 
 V-Chat is a local, multi-model chat application built with Flask. Users can chat with different AI models and manage their chat history.
 
@@ -63,3 +63,4 @@ V-Chat-0.41/
 ## Contribution & License
 
 You can contribute by sending a pull request. For license information, see the LICENSE file.
+

@@ -1,4 +1,4 @@
-# V-Chat
+# vChat
 
 V-Chat is an AI chat application that uses the Ollama API. It is developed with the Flask web framework and offers a user-friendly interface.
 
@@ -53,3 +53,4 @@ python app.py
 ## License
 
 This project is licensed under the GNU Affero General Public License v3.0.
+

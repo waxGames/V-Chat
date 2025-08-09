@@ -34,7 +34,7 @@ V-Chat is a local, multi-model chat application built with Flask. Users can chat
 ## Project Structure
 
 ```
-V-Chat-0.41/
+FOLDER/
 ├── app.py                  # Main application file
 ├── requirements.txt        # Python dependencies
 ├── README.md               # This file
@@ -63,4 +63,5 @@ V-Chat-0.41/
 ## Contribution & License
 
 You can contribute by sending a pull request. For license information, see the LICENSE file.
+
 

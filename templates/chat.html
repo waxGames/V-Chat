@@ -208,48 +208,6 @@
     </div>
   </div>
 
-  <script>
-    (function () {
-      const savedTheme = localStorage.getItem('theme') || 'dark';
-      document.documentElement.setAttribute('data-theme', savedTheme);
-
-      document.addEventListener('DOMContentLoaded', () => {
-        const themeToggle = document.getElementById('themeToggle');
-        const sunIcon = document.getElementById('sunIcon');
-        const moonIcon = document.getElementById('moonIcon');
-        const themeText = document.getElementById('themeText');
-
-        function updateUI(theme) {
-          if (theme === 'dark') {
-            sunIcon.classList.remove('hidden');
-            moonIcon.classList.add('hidden');
-            themeText.textContent = 'Light Mode';
-          } else {
-            sunIcon.classList.add('hidden');
-            moonIcon.classList.remove('hidden');
-            themeText.textContent = 'Dark Mode';
-          }
-        }
-
-        updateUI(savedTheme);
-
-        themeToggle.addEventListener('click', () => {
-          const currentTheme = document.documentElement.getAttribute('data-theme');
-          const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-
-          document.documentElement.classList.add('no-transition');
-
-          document.documentElement.setAttribute('data-theme', newTheme);
-          localStorage.setItem('theme', newTheme);
-          updateUI(newTheme);
-
-          setTimeout(() => {
-            document.documentElement.classList.remove('no-transition');
-          }, 0);
-        });
-      });
-    })();
-  </script>
   <script src="/static/js/chat.js"></script>
 </body>
 

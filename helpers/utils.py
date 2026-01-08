@@ -30,7 +30,6 @@ def setup_environment():
                 f.write("test")
             os.remove(test_file)
         except PermissionError:
-            print("Program Files dizinine yazma izni yok. Yönetici olarak çalıştırılmalı.")
             return False
             
         test_file = os.path.join(USER_DATA_PATH, "test.tmp")

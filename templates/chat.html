@@ -1,53 +1,86 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{{ chat_title }} - AI Chat</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet"/>
-  <link href="/static/css/chat.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <link href="/static/css/chat.css" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 </head>
+
 <body class="bg-gray-100 h-screen flex">
   <div id="sidebar" class="w-64 bg-gray-800 text-white p-4 flex flex-col h-full">
     <button id="newChatBtn" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded mb-4 flex items-center">
       <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-        <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
+        <path fill-rule="evenodd"
+          d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
+          clip-rule="evenodd" />
       </svg>
       New Chat
     </button>
     <div class="flex-1 overflow-y-auto">
-        <h2 class="text-gray-400 uppercase text-xs font-semibold mb-2">CHAT HISTORY</h2>
-        <div id="chatList">
-            {% if chats %}
-                {% for chat_id, chat in chats %}
-                <div class="flex items-center justify-between {% if chat_id == request.view_args.chat_id %}bg-gray-700{% else %}bg-gray-800{% endif %} hover:bg-gray-700 rounded mb-1 px-1 w-full">
-                    <a href="/chat/{{ chat_id }}" class="block py-2 px-2 truncate flex-grow">
-                        {{ chat.title }}
-                    </a>
-                    <div class="relative">
-                        <button class="chat-menu-btn text-gray-300 hover:text-white px-2 py-1 focus:outline-none" data-chat-id="{{ chat_id }}">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-                            </svg>
-                        </button>
-                        <div class="chat-menu hidden absolute right-0 mt-2 w-48 bg-gray-800 rounded-md shadow-lg z-10">
-                            <div class="py-1">
-                                <button onclick="renameChat('{{ chat_id }}')" class="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">
-                                    Yeniden Adlandır
-                                </button>
-                                <button onclick="deleteChat('{{ chat_id }}')" class="block w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-700">
-                                    Sil
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
-            {% else %}
-                <p class="text-gray-500 text-sm italic">No chats yet</p>
-            {% endif %}
+      <h2 class="text-gray-400 uppercase text-xs font-semibold mb-2">CHAT HISTORY</h2>
+      <div id="chatList">
+        {% if chats %}
+        {% for chat_id, chat in chats %}
+        <div
+          class="flex items-center justify-between {% if chat_id == request.view_args.chat_id %}bg-gray-700{% else %}bg-gray-800{% endif %} hover:bg-gray-700 rounded mb-1 px-1 w-full">
+          <a href="/chat/{{ chat_id }}" class="block py-2 px-2 truncate flex-grow">
+            {{ chat.title }}
+          </a>
+          <div class="relative">
+            <button class="chat-menu-btn text-gray-300 hover:text-white px-2 py-1 focus:outline-none"
+              data-chat-id="{{ chat_id }}">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path
+                  d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+              </svg>
+            </button>
+            <div class="chat-menu hidden absolute right-0 mt-2 w-48 bg-gray-800 rounded-md shadow-lg z-10">
+              <div class="py-1">
+                <button onclick="renameChat('{{ chat_id }}')"
+                  class="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">
+                  Yeniden Adlandır
+                </button>
+                <button onclick="deleteChat('{{ chat_id }}')"
+                  class="block w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-700">
+                  Sil
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
+        {% endfor %}
+        {% else %}
+        <p class="text-gray-500 text-sm italic">No chats yet</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="theme-toggle-container">
+      <button id="themeToggle" class="theme-btn">
+        <svg id="moonIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24"
+          stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+        </svg>
+        <svg id="sunIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 hidden" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="17.78" x2="5.64" y2="16.36"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <span id="themeText">Theme</span>
+      </button>
     </div>
   </div>
 
@@ -57,12 +90,14 @@
       <div class="flex space-x-2">
         <button id="renameChatButton" class="text-gray-600 hover:text-gray-800">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
           </svg>
         </button>
         <button id="deleteChatBtn" class="text-red-600 hover:text-red-800">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
           </svg>
         </button>
       </div>
@@ -70,25 +105,29 @@
 
     <div id="messages" class="flex-1 overflow-y-auto p-4 space-y-4">
       {% for message in messages %}
-      <div class="{% if message.sender == 'user' %}user-message flex justify-end{% else %}ai-message flex justify-start{% endif %}">
-        <div class="message-content {% if message.sender == 'user' %}bg-blue-600 text-white{% else %}bg-white border border-gray-200{% endif %} rounded-lg p-3">
+      <div
+        class="{% if message.sender == 'user' %}user-message flex justify-end{% else %}ai-message flex justify-start{% endif %}">
+        <div
+          class="message-content {% if message.sender == 'user' %}bg-blue-600 text-white{% else %}bg-white border border-gray-200{% endif %} rounded-lg p-3">
           {% if message.get('canceled') %}
           <div class="prose text-sm text-gray-500 italic">Canceled</div>
           {% else %}
           {% if message.sender == 'ai' %}
           {% endif %}
-          <div class="prose">{{ message.content|safe }}</div>
+          <div class="prose" data-raw="{{ message.content }}">{{ message.content|safe }}</div>
           {% if message.get('has_think') %}
           <div class="mt-2 pt-2 border-t border-gray-200">
             <button class="think-toggle-btn text-xs text-blue-600 hover:text-blue-800 flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               Show Thinking Process
             </button>
             <div class="think-content hidden mt-2 p-2 bg-gray-100 rounded text-sm">
               <div class="font-semibold mb-1 text-gray-700">Think:</div>
-              {{ message.think|safe }}
+              <div class="think-body" data-raw="{{ message.think }}">{{ message.think|safe }}</div>
             </div>
           </div>
           {% endif %}
@@ -98,92 +137,120 @@
       {% endfor %}
     </div>
 
-    <div class="bg-white border-t border-gray-200 p-4">
-      <form id="messageForm" class="flex space-x-2">
-        <label for="modelSelector" class="text-gray-400 text-xs font-semibold mr-1 self-center">Models</label>
-        <select id="modelSelector" class="bg-gray-700 text-white rounded px-2 py-1 focus:outline-none focus:ring-0 focus:border-gray-600 text-xs" style="width: 110px; min-width: 80px; max-width: 140px; height: 28px;">
-          <optgroup label="DeepSeek Models">
-            <option value="deepseek-r1:1.5b">DeepSeek 1.5b</option>
-            <option value="deepseek-r1:7b">DeepSeek 7b</option>
-            <option value="deepseek-r1:8b">DeepSeek 8b</option>
-            <option value="deepseek-r1:14b">DeepSeek 14b</option>
-            <option value="deepseek-r1:32b">DeepSeek 32b</option>
-            <option value="deepseek-r1:70b">DeepSeek 70b</option>
-            <option value="deepseek-r1:671b">DeepSeek 671b</option>
-          </optgroup>
-          <optgroup label="Qwen Models">
-            <option value="qwen3:latest">Qwen3 Latest</option>
-            <option value="qwen3:0.6b">Qwen3 0.6b</option>
-            <option value="qwen3:1.7b">Qwen3 1.7b</option>
-            <option value="qwen3:4b">Qwen3 4b</option>
-            <option value="qwen3:8b">Qwen3 8b</option>
-            <option value="qwen3:14b">Qwen3 14b</option>
-            <option value="qwen3:30b">Qwen3 30b</option>
-            <option value="qwen3:32b">Qwen3 32b</option>
-            <option value="qwen3:235b">Qwen3 235b</option>
-            <option value="qwen2.5vl:latest">Qwen2.5vl Latest</option>
-            <option value="qwen2.5vl:3b">Qwen2.5vl 3b</option>
-            <option value="qwen2.5vl:7b">Qwen2.5vl 7b</option>
-            <option value="qwen2.5vl:32b">Qwen2.5vl 32b</option>
-            <option value="qwen2.5vl:72b">Qwen2.5vl 72b</option>
-          </optgroup>
-          <optgroup label="Llama Models">
-            <option value="llama3.3:latest">Llama 3.3 Latest</option>
-            <option value="llama3.3:70b">Llama 3.3 70b</option>
-          </optgroup>
-          <optgroup label="Gemma Models">
-            <option value="gemma3:latest">Gemma3 Latest</option>
-            <option value="gemma3:1b">Gemma3 1b</option>
-            <option value="gemma3:4b">Gemma3 4b</option>
-            <option value="gemma3:12b">Gemma3 12b</option>
-            <option value="gemma3:27b">Gemma3 27b</option>
-          </optgroup>
-          <optgroup label="Phi Models">
-            <option value="phi4:latest">Phi4 Latest</option>
-            <option value="phi4:14b">Phi4 14b</option>
-          </optgroup>
-        </select>
-        <input type="text" id="messageInput" placeholder="Type a message..." maxlength="2000"
-          class="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-0 focus:border-gray-600">
-        <button type="submit" id="submitButton"
-          class="submit-button bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center justify-center">
-          <span class="button-text">Send</span>
-          <div class="loading-dots">
-            <div></div>
-            <div></div>
-            <div></div>
+    <div class="input-area-wrapper">
+      <div class="input-area-container">
+        <form id="messageForm" class="flex flex-col">
+          <div class="message-input-wrapper">
+            <textarea id="messageInput" placeholder="Type a message..." class="w-full focus:outline-none"
+              rows="1"></textarea>
           </div>
-        </button>
-      </form>
+          <div class="input-controls-wrapper flex justify-between items-center mt-2">
+            <div class="model-select-section flex items-center">
+              <label class="text-xs font-semibold mr-2 opacity-70">Models</label>
+              <div id="customModelDropdown" class="custom-dropdown">
+                <button type="button" id="dropdownTrigger" class="dropdown-trigger">
+                  <span id="selectedModelName">Loading models...</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 ml-2" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                <div id="dropdownMenu" class="dropdown-menu">
+                </div>
+              </div>
+              <select id="modelSelector" class="hidden"></select>
+            </div>
+            <button type="submit" id="submitButton" class="submit-button">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 19V5M5 12l7-7 7 7" />
+              </svg>
+              <div class="loading-dots">
+                <div></div>
+                <div></div>
+                <div></div>
+              </div>
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   </div>
 
-  <div id="chatContextMenu" class="hidden absolute bg-gray-700 rounded shadow-lg py-1 z-50" style="min-width: 150px;">
-    <button id="renameChatBtn" class="w-full text-left px-4 py-2 text-white hover:bg-gray-600 flex items-center">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+  <div id="chatContextMenu" class="absolute bg-gray-700 rounded shadow-lg py-1 z-50" style="min-width: 150px;">
+    <button id="renameChatBtn" class="w-full text-left px-4 py-2 flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24"
+        stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
       </svg>
       Rename
     </button>
-    <button id="deleteChatBtnContext" class="w-full text-left px-4 py-2 text-white hover:bg-gray-600 flex items-center">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+    <button id="deleteChatBtnContext" class="w-full text-left px-4 py-2 flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24"
+        stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
       </svg>
       Delete
     </button>
   </div>
-  
+
   <div id="renameDialog" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
     <div class="bg-white rounded-lg p-6 w-80">
       <h3 class="text-lg font-semibold mb-4">Rename Chat</h3>
-      <input type="text" id="newChatTitle" class="w-full border border-gray-300 rounded px-3 py-2 mb-4" placeholder="New title">
+      <input type="text" id="newChatTitle" class="w-full border border-gray-300 rounded px-3 py-2 mb-4"
+        placeholder="New title">
       <div class="flex justify-end space-x-2">
         <button id="cancelRenameBtn" class="px-4 py-2 border border-gray-300 rounded hover:bg-gray-100">Cancel</button>
         <button id="confirmRenameBtn" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Save</button>
       </div>
     </div>
   </div>
-  
+
+  <script>
+    (function () {
+      const savedTheme = localStorage.getItem('theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+
+      document.addEventListener('DOMContentLoaded', () => {
+        const themeToggle = document.getElementById('themeToggle');
+        const sunIcon = document.getElementById('sunIcon');
+        const moonIcon = document.getElementById('moonIcon');
+        const themeText = document.getElementById('themeText');
+
+        function updateUI(theme) {
+          if (theme === 'dark') {
+            sunIcon.classList.remove('hidden');
+            moonIcon.classList.add('hidden');
+            themeText.textContent = 'Light Mode';
+          } else {
+            sunIcon.classList.add('hidden');
+            moonIcon.classList.remove('hidden');
+            themeText.textContent = 'Dark Mode';
+          }
+        }
+
+        updateUI(savedTheme);
+
+        themeToggle.addEventListener('click', () => {
+          const currentTheme = document.documentElement.getAttribute('data-theme');
+          const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+          document.documentElement.classList.add('no-transition');
+
+          document.documentElement.setAttribute('data-theme', newTheme);
+          localStorage.setItem('theme', newTheme);
+          updateUI(newTheme);
+
+          setTimeout(() => {
+            document.documentElement.classList.remove('no-transition');
+          }, 0);
+        });
+      });
+    })();
+  </script>
   <script src="/static/js/chat.js"></script>
 </body>
+
 </html>

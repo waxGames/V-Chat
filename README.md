@@ -1,67 +1,59 @@
-# vChat
+# V-Chat (v2.0)
 
-V-Chat is a local, multi-model chat application built with Flask. Users can chat with different AI models and manage their chat history.
+V-Chat is a modern, privacy-focused, and locally-hosted AI chat interface. Powered by **Ollama**, it ensures your data remains entirely on your machine while providing a high-performance experience with models like DeepSeek, Llama, and Mistral.
 
-## Features
-- Web interface with Flask
-- Multi-LLM (large language model) support via Ollama API
-- User-specific chat history
-- Rename, delete, and create new chats
-- Model selection and installation check
+## Key Features
 
-## Installation
+- **Local & Private:** All processing happens on your own hardware; no data is ever sent to external servers.
+- **Thought Tracking:** Specifically designed to visualize the "reasoning" (thinking) processes of models like DeepSeek-R1.
+- **Premium UI/UX:** A responsive, sleek web interface featuring Light and Dark modes with glassmorphism aesthetics.
+- **Persistent History:** Your conversations are securely stored in a local SQLite database, allowing you to resume them anytime.
+- **Seamless Setup:** Automated environment configuration for Windows, including intelligent administrator privilege handling.
 
-1. **Requirements:**
-   - Python 3.8+
-   - Ollama (Download and install from https://ollama.com/)
+## Quick Start
 
-2. **Install dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
+### 1. Prerequisites
+- **Python 3.8+**
+- **[Ollama](https://ollama.com/)** (Download, install, and ensure it is running in the background)
 
-3. **Start Ollama:**
-   Make sure Ollama is running in the background (default port: 11434).
+### 2. Installation
+Clone or download the project, then install the required dependencies:
+```bash
+pip install -r requirements.txt
+```
 
-4. **Run the application:**
-   ```bash
-   python app.py
-   ```
-
-5. **Access from your browser:**
-   The app runs at http://localhost:5000 by default.
+### 3. Usage
+Start the application:
+```bash
+python app.py
+```
+Once started, open your browser and navigate to:
+`http://localhost:5335`
 
 ## Project Structure
 
-```
-FOLDER/
-├── app.py                  # Main application file
-├── requirements.txt        # Python dependencies
-├── README.md               # This file
-├── bot/
-│   └── ollama_service.py   # Ollama API communication and model management
-├── database/
-│   └── database.py         # Chat history and data management
-├── helpers/
-│   ├── config.py           # Configuration and constants
-│   └── utils.py            # Utility functions
-├── server/
-│   └── routes.py           # Flask Blueprint and all routes
-├── static/
-│   ├── css/                # CSS files
-│   └── js/                 # JavaScript files
-└── templates/
-    ├── index.html          # Main page template
-    └── chat.html           # Chat page template
+```text
+V-Chat/
+├── app.py              # Application entry point and Flask server configuration
+├── requirements.txt    # Essential Python libraries
+├── bot/                # Ollama API communication and AI logic
+├── database/           # SQLite database operations (chats.db)
+├── helpers/            # Utility functions and environment configuration
+├── server/             # Flask routes and API endpoints
+├── static/             # Frontend assets (CSS, JS, Images)
+└── templates/          # HTML templates
 ```
 
-## Notes
-- Your chats are stored locally and are not sent outside.
-- If the Ollama API is not running, model loading and chat features will be disabled.
-- On Windows, you may need to run as administrator (for writing to Program Files directory).
+## Technology Stack
+- **Backend:** Flask (Python)
+- **Frontend:** Vanilla JS, Modern CSS (Custom variables, Gradients, Glassmorphism)
+- **AI Engine:** Ollama API
+- **Database:** SQLite
 
-## Contribution & License
+## Important Notes
+- The application runs on port **5335** by default.
+- On Windows, if administrative privileges are required (e.g., for Program Files access), the app will automatically request UAC approval.
+- Chat data is stored locally in the `%LocalAppData%/V-Chat` directory.
 
-You can contribute by sending a pull request. For license information, see the LICENSE file.
-
-
+---
+*V-Chat: Your personal, secure AI companion.*

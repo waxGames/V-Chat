@@ -1,18 +1,18 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const newChatBtns = document.querySelectorAll('#newChatBtn, #newChatBtnMain');
     const dropdownMenu = document.getElementById('chatDropdownMenu');
     const renameDialog = document.getElementById('renameDialog');
     const newChatTitleInput = document.getElementById('newChatTitle');
     let currentChatId = null;
 
-    document.addEventListener('click', function(e) {
+    document.addEventListener('click', function (e) {
         if (!e.target.closest('.chat-menu-btn') && !e.target.closest('#chatDropdownMenu')) {
-            dropdownMenu.classList.add('hidden');
+            dropdownMenu.classList.remove('active');
         }
     });
 
     newChatBtns.forEach(btn => {
-        btn.addEventListener('click', async function() {
+        btn.addEventListener('click', async function () {
             try {
                 const response = await fetch('/new_chat', {
                     method: 'POST',
@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function addChatMenuListeners() {
         document.querySelectorAll('.chat-menu-btn').forEach(btn => {
-            btn.addEventListener('click', function(e) {
+            btn.addEventListener('click', function (e) {
                 e.preventDefault();
                 e.stopPropagation();
 
@@ -43,16 +43,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 dropdownMenu.style.top = `${rect.bottom + window.scrollY}px`;
                 dropdownMenu.style.left = `${rect.left + window.scrollX - 150 + rect.width}px`;
 
-                dropdownMenu.classList.remove('hidden');
+                dropdownMenu.classList.add('active');
             });
         });
     }
 
-    document.getElementById('renameChatBtn').addEventListener('click', function() {
-        dropdownMenu.classList.add('hidden');
+    document.getElementById('renameChatBtn').addEventListener('click', function () {
+        dropdownMenu.classList.remove('active');
 
         const chatItem = document.querySelector(`.chat-menu-btn[data-chat-id="${currentChatId}"]`)
-            .closest('div').querySelector('a');
+            ?.closest('div')?.querySelector('a');
 
         if (chatItem) {
             newChatTitleInput.value = chatItem.textContent.trim();
@@ -60,11 +60,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    document.getElementById('cancelRenameBtn').addEventListener('click', function() {
+    document.getElementById('cancelRenameBtn').addEventListener('click', function () {
         renameDialog.classList.add('hidden');
     });
 
-    document.getElementById('confirmRenameBtn').addEventListener('click', async function() {
+    document.getElementById('confirmRenameBtn').addEventListener('click', async function () {
         const newTitle = newChatTitleInput.value.trim();
         if (!newTitle) return;
 
@@ -92,8 +92,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    document.getElementById('deleteChatBtn').addEventListener('click', async function() {
-        dropdownMenu.classList.add('hidden');
+    document.getElementById('deleteChatBtn').addEventListener('click', async function () {
+        dropdownMenu.classList.remove('active');
 
         if (!confirm('Are you sure you want to delete this chat?')) return;
 
@@ -115,14 +115,11 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     function updateChatList() {
-        console.log("Updating chat list...");
         fetch('/get_chats')
             .then(response => {
-                console.log("Response received:", response);
                 return response.json();
             })
             .then(data => {
-                console.log("Data received:", data);
                 const chatListElement = document.getElementById('chatList');
                 let chatListHTML = '';
 
@@ -146,7 +143,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
 
                 chatListElement.innerHTML = chatListHTML;
-                console.log("Chat list updated");
 
                 addChatMenuListeners();
             })
@@ -155,7 +151,6 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 
-    console.log("Page loaded, updating chat list...");
     updateChatList();
     setInterval(updateChatList, 2000);
 });

@@ -1,10 +1,20 @@
 let isWaiting = false;
 let abortController = null;
 let currentChatId = null;
-let currentModel = localStorage.getItem('selectedModel') || 'deepseek-r1:7b';
+let targetChatIdForAction = null;
 let typingAnimation = null;
 
-document.addEventListener('DOMContentLoaded', function() {
+try {
+    marked.setOptions({
+        highlight: function (code, lang) {
+            const language = hljs.getLanguage(lang) ? lang : 'plaintext';
+            return hljs.highlight(code, { language }).value;
+        },
+        langPrefix: 'hljs language-'
+    });
+} catch (e) { }
+
+document.addEventListener('DOMContentLoaded', function () {
     const modelSelector = document.getElementById('modelSelector');
     const messageForm = document.getElementById('messageForm');
     const messageInput = document.getElementById('messageInput');
@@ -13,10 +23,47 @@ document.addEventListener('DOMContentLoaded', function() {
     const messagesContainer = document.getElementById('messages');
 
     currentChatId = window.location.pathname.split('/').pop();
+    if (currentChatId === 'chat' || currentChatId === '') currentChatId = null;
 
     markLoadedModelsAndConfigureSelector();
 
-    messageForm.addEventListener('submit', async function(e) {
+    function adjustInputHeight() {
+        messageInput.style.height = 'auto';
+        let newHeight = messageInput.scrollHeight;
+
+        const maxHeight = window.innerHeight * 0.3;
+
+        if (newHeight > maxHeight) {
+            newHeight = maxHeight;
+            messageInput.style.overflowY = 'auto';
+        } else {
+            messageInput.style.overflowY = 'hidden';
+        }
+
+        messageInput.style.height = newHeight + 'px';
+
+        const threshold = 100;
+        const isNearBottom = messagesContainer.scrollHeight - messagesContainer.scrollTop - messagesContainer.clientHeight < threshold;
+        if (isNearBottom) {
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+    }
+
+    messageInput.addEventListener('input', adjustInputHeight);
+
+    adjustInputHeight();
+    messageInput.addEventListener('paste', () => {
+        setTimeout(adjustInputHeight, 0);
+    });
+
+    messageInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            messageForm.dispatchEvent(new Event('submit'));
+        }
+    });
+
+    messageForm.addEventListener('submit', async function (e) {
         e.preventDefault();
 
         if (isWaiting) return;
@@ -28,8 +75,12 @@ document.addEventListener('DOMContentLoaded', function() {
         messageInput.disabled = true;
         submitButton.disabled = true;
 
+        document.getElementById('newChatBtn').classList.add('waiting-state');
+        document.getElementById('chatList').classList.add('waiting-state');
+
         appendMessage('user', message);
         messageInput.value = '';
+        messageInput.style.height = 'auto';
 
         startTypingAnimation();
 
@@ -70,10 +121,13 @@ document.addEventListener('DOMContentLoaded', function() {
             isWaiting = false;
             messageInput.disabled = false;
             submitButton.disabled = false;
+
+            document.getElementById('newChatBtn').classList.remove('waiting-state');
+            document.getElementById('chatList').classList.remove('waiting-state');
         }
     });
 
-    submitButton.addEventListener('click', async function() {
+    submitButton.addEventListener('click', async function () {
         if (isWaiting) {
             try {
                 const response = await fetch('/chat/' + currentChatId + '/cancel', {
@@ -128,7 +182,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (canceled) {
             messageContent += `<div class="prose text-sm text-gray-500 italic">Canceled</div>`;
         } else {
-            messageContent += `<div class="prose">${content}</div>`;
+            messageContent += `<div class="prose">${marked.parse(content)}</div>`;
         }
 
         if (think) {
@@ -142,7 +196,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </button>
                 <div class="think-content hidden mt-2 p-2 bg-gray-100 rounded text-sm">
                   <div class="font-semibold mb-1 text-gray-700">Think:</div>
-                  ${think}
+                  <div class="think-body">${marked.parse(think)}</div>
                 </div>
             </div>
             `;
@@ -156,7 +210,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const thinkBtn = messageDiv.querySelector('.think-toggle-btn');
         if (thinkBtn) {
-            thinkBtn.addEventListener('click', function() {
+            thinkBtn.addEventListener('click', function () {
                 const thinkContent = this.nextElementSibling;
                 if (thinkContent.classList.contains('hidden')) {
                     thinkContent.classList.remove('hidden');
@@ -177,6 +231,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
         }
+
+        processCodeBlocks(messageDiv);
     }
 
 });
@@ -192,71 +248,99 @@ async function markLoadedModelsAndConfigureSelector() {
 
         if (data.success && data.models) {
             loadedModels = data.models;
-            console.log('Loaded models:', loadedModels);
-        } else if (data.error) {
-            console.error('Models not loaded:', data.error);
-            const option = document.createElement('option');
-            option.value = "";
-            option.textContent = "Ollama connection error";
-            modelSelector.insertBefore(option, modelSelector.firstChild);
-            modelSelector.value = "";
-            modelSelector.disabled = true;
-            return;
+        } else {
+            throw new Error(data.error || 'Failed to load models');
         }
     } catch (error) {
         console.error('Error loading models:', error);
-        const option = document.createElement('option');
-        option.value = "";
-        option.textContent = "Ollama connection error";
-        modelSelector.insertBefore(option, modelSelector.firstChild);
-        modelSelector.value = "";
+        modelSelector.innerHTML = '<option value="">Ollama connection error</option>';
         modelSelector.disabled = true;
         return;
     }
 
-    const options = modelSelector.querySelectorAll('option');
-    options.forEach(option => {
-        const modelFullName = option.value;
-        const isInstalled = loadedModels.some(model =>
-            model.full_name === modelFullName && model.is_installed
-        );
+    if (loadedModels.length === 0) {
+        modelSelector.innerHTML = '<option value="">No models installed</option>';
+        modelSelector.disabled = true;
+        return;
+    }
 
-        if (isInstalled) {
-            if (!option.textContent.includes('✓')) {
-                option.textContent = option.textContent.replace(' ✗', '') + ' ✓';
-            }
-            option.classList.add('text-green-500');
-        } else {
-            if (!option.textContent.includes('✗')) {
-                option.textContent = option.textContent.replace(' ✓', '') + ' ✗';
-            }
-            option.classList.add('text-red-500');
-        }
+    const groups = {};
+    loadedModels.forEach(model => {
+        const groupName = model.full_name.split(':')[0].split('-')[0].toUpperCase();
+        if (!groups[groupName]) groups[groupName] = [];
+        groups[groupName].push(model);
     });
 
     const savedModel = localStorage.getItem('selectedModel');
-    if (savedModel) {
-        modelSelector.value = savedModel;
-        if (modelSelector.value !== savedModel) {
-            console.warn('Saved model ', savedModel, ' not found in current model list');
-        }
-    } else {
-        const firstLoadedOption = modelSelector.querySelector('option[value]');
-        if (firstLoadedOption && firstLoadedOption.textContent.includes('✓')) {
-            modelSelector.value = firstLoadedOption.value;
-            localStorage.setItem('selectedModel', modelSelector.value);
-        } else if (options.length > 0) {
-            modelSelector.value = options[0].value;
-            localStorage.setItem('selectedModel', modelSelector.value);
-        }
+    let modelToSelect = savedModel;
+
+    dropdownMenu.innerHTML = '';
+
+    Object.keys(groups).sort().forEach(groupName => {
+        const groupLabel = document.createElement('div');
+        groupLabel.className = 'dropdown-group-label';
+        groupLabel.textContent = groupName + ' Models';
+        dropdownMenu.appendChild(groupLabel);
+
+        groups[groupName].forEach(model => {
+            const item = document.createElement('div');
+            item.className = 'dropdown-item';
+            item.setAttribute('data-model', model.full_name);
+            item.innerHTML = `
+                <span>${model.full_name}</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="check-icon h-4 w-4 hidden" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                </svg>
+            `;
+
+            item.addEventListener('click', () => updateSelectedModel(model.full_name));
+            dropdownMenu.appendChild(item);
+        });
+    });
+
+    if (!modelToSelect || !loadedModels.find(m => m.full_name === modelToSelect)) {
+        modelToSelect = loadedModels[0].full_name;
     }
+
+    updateSelectedModel(modelToSelect);
 }
 
-document.getElementById('modelSelector').addEventListener('change', function() {
-    currentModel = this.value;
+const customDropdown = document.getElementById('customModelDropdown');
+const dropdownTrigger = document.getElementById('dropdownTrigger');
+const dropdownMenu = document.getElementById('dropdownMenu');
+const selectedModelName = document.getElementById('selectedModelName');
+
+if (dropdownTrigger) {
+    dropdownTrigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        customDropdown.classList.toggle('active');
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!customDropdown.contains(e.target)) {
+            customDropdown.classList.remove('active');
+        }
+    });
+}
+
+function updateSelectedModel(modelName) {
+    currentModel = modelName;
     localStorage.setItem('selectedModel', currentModel);
-    console.log('Model changed to:', currentModel);
-});
+    selectedModelName.textContent = modelName;
+
+    document.querySelectorAll('.dropdown-item').forEach(item => {
+        item.classList.remove('selected');
+        const check = item.querySelector('.check-icon');
+        if (check) check.classList.add('hidden');
+
+        if (item.getAttribute('data-model') === modelName) {
+            item.classList.add('selected');
+            if (check) check.classList.remove('hidden');
+        }
+    });
+
+    customDropdown.classList.remove('active');
+}
 
 function updateChatList() {
     const currentPath = window.location.pathname;
@@ -270,18 +354,19 @@ function updateChatList() {
             if (data.chats && data.chats.length > 0) {
                 data.chats.forEach(chat => {
                     const isActive = chat.id === currentChatId;
+                    const disabledClass = isWaiting ? 'opacity-50 pointer-events-none cursor-not-allowed' : '';
                     chatListHTML += `
-                        <div class="flex items-center justify-between ${isActive ? 'bg-gray-700' : 'bg-gray-800'} hover:bg-gray-700 rounded mb-1 px-1 w-full">
-                            <a href="/chat/${chat.id}" class="block py-2 px-2 truncate flex-grow">
+                        <div class="flex items-center justify-between ${isActive ? 'bg-gray-700' : 'bg-gray-800'} hover:bg-gray-700 rounded mb-1 px-1 w-full ${disabledClass}">
+                            <a href="/chat/${chat.id}" class="block py-2 px-2 truncate flex-grow ${isWaiting ? 'pointer-events-none' : ''}">
                                 ${chat.title}
                             </a>
                             <div class="relative">
-                                <button class="chat-menu-btn text-gray-300 hover:text-white px-2 py-1 focus:outline-none" data-chat-id="${chat.id}">
+                                <button class="chat-menu-btn text-gray-300 hover:text-white px-2 py-1 focus:outline-none ${isWaiting ? 'opacity-50 pointer-events-none' : ''}" data-chat-id="${chat.id}">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                                         <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
                                     </svg>
                                 </button>
-                                <div class="chat-menu hidden absolute right-0 mt-2 w-48 bg-gray-800 rounded-md shadow-lg z-10">
+                                <div class="chat-menu absolute right-0 mt-2 w-48 bg-gray-800 rounded-md shadow-lg z-10">
                                     <div class="py-1">
                                         <button onclick="renameChat('${chat.id}')" class="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700">
                                             Yeniden Adlandır
@@ -309,63 +394,64 @@ function updateChatList() {
 
 function addChatMenuListeners() {
     document.querySelectorAll('.chat-menu-btn').forEach(btn => {
-        btn.addEventListener('click', function(e) {
+        btn.addEventListener('click', function (e) {
             e.preventDefault();
             e.stopPropagation();
 
-            currentChatId = this.getAttribute('data-chat-id');
+            targetChatIdForAction = this.getAttribute('data-chat-id');
 
             const rect = this.getBoundingClientRect();
             const contextMenu = document.getElementById('chatContextMenu');
             contextMenu.style.top = `${rect.bottom + window.scrollY}px`;
             contextMenu.style.left = `${rect.left + window.scrollX - 150 + rect.width}px`;
 
-            contextMenu.classList.remove('hidden');
+            contextMenu.classList.add('active');
         });
     });
 }
-
-document.addEventListener('click', function(e) {
+document.addEventListener('click', function (e) {
     if (!e.target.closest('.chat-menu-btn') && !e.target.closest('#chatContextMenu')) {
-        document.getElementById('chatContextMenu').classList.add('hidden');
+        document.getElementById('chatContextMenu').classList.remove('active');
     }
 });
 
-document.getElementById('renameChatButton').addEventListener('click', function() {
+document.getElementById('renameChatButton').addEventListener('click', function () {
+    targetChatIdForAction = window.location.pathname.split('/').pop();
+    if (targetChatIdForAction === 'chat' || targetChatIdForAction === '') targetChatIdForAction = null;
+
     document.getElementById('newChatTitle').value = document.querySelector('h1.text-xl').textContent.trim();
     document.getElementById('renameDialog').classList.remove('hidden');
 });
 
-document.getElementById('renameChatBtn').addEventListener('click', function() {
-    document.getElementById('chatContextMenu').classList.add('hidden');
+document.getElementById('renameChatBtn').addEventListener('click', function () {
+    document.getElementById('chatContextMenu').classList.remove('active');
 
     let chatTitle = '';
-    if (currentChatId === '{{ chat_id }}') {
-        chatTitle = document.querySelector('h1.text-xl').textContent.trim();
+    const chatElement = document.querySelector(`.chat-menu-btn[data-chat-id="${targetChatIdForAction}"]`)
+        ?.closest('div')?.querySelector('a');
+
+    if (chatElement) {
+        chatTitle = chatElement.textContent.trim();
     } else {
-        const chatElement = document.querySelector(`.chat-menu-btn[data-chat-id="${currentChatId}"]`)
-            .closest('div').querySelector('a');
-        if (chatElement) {
-            chatTitle = chatElement.textContent.trim();
-        }
+        chatTitle = document.querySelector('h1.text-xl').textContent.trim();
     }
 
     document.getElementById('newChatTitle').value = chatTitle;
     document.getElementById('renameDialog').classList.remove('hidden');
 });
 
-document.getElementById('cancelRenameBtn').addEventListener('click', function() {
+document.getElementById('cancelRenameBtn').addEventListener('click', function () {
     document.getElementById('renameDialog').classList.add('hidden');
 });
 
-document.getElementById('confirmRenameBtn').addEventListener('click', async function() {
+document.getElementById('confirmRenameBtn').addEventListener('click', async function () {
     const newTitle = document.getElementById('newChatTitle').value.trim();
     if (!newTitle) return;
 
-    const chatIdToRename = currentChatId || '{{ chat_id }}';
+    if (!targetChatIdForAction) return;
 
     try {
-        const response = await fetch('/chat/' + chatIdToRename + '/rename', {
+        const response = await fetch('/chat/' + targetChatIdForAction + '/rename', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -379,7 +465,8 @@ document.getElementById('confirmRenameBtn').addEventListener('click', async func
         if (data.success) {
             document.getElementById('renameDialog').classList.add('hidden');
 
-            if (chatIdToRename === '{{ chat_id }}') {
+            const currentPathId = window.location.pathname.split('/').pop();
+            if (targetChatIdForAction === currentPathId) {
                 document.title = `${newTitle} - AI Chat`;
                 document.querySelector('h1.text-xl').textContent = newTitle;
             }
@@ -394,19 +481,20 @@ document.getElementById('confirmRenameBtn').addEventListener('click', async func
     }
 });
 
-document.getElementById('deleteChatBtnContext').addEventListener('click', async function() {
-    document.getElementById('chatContextMenu').classList.add('hidden');
+document.getElementById('deleteChatBtnContext').addEventListener('click', async function () {
+    document.getElementById('chatContextMenu').classList.remove('active');
 
     if (!confirm('Are you sure you want to delete this chat?')) return;
 
     try {
-        const response = await fetch('/chat/' + currentChatId + '/delete', {
+        const response = await fetch('/chat/' + targetChatIdForAction + '/delete', {
             method: 'POST'
         });
 
         const data = await response.json();
         if (data.success) {
-            if (currentChatId === '{{ chat_id }}') {
+            const currentPathId = window.location.pathname.split('/').pop();
+            if (targetChatIdForAction === currentPathId) {
                 window.location.href = data.redirect;
             } else {
                 updateChatList();
@@ -420,8 +508,7 @@ document.getElementById('deleteChatBtnContext').addEventListener('click', async 
     }
 });
 
-document.addEventListener('DOMContentLoaded', function() {
-    console.log("Page loaded, updating chat list...");
+document.addEventListener('DOMContentLoaded', function () {
     updateChatList();
     setInterval(updateChatList, 2000);
 
@@ -431,7 +518,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     document.querySelectorAll('.think-toggle-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function () {
             const thinkContent = this.nextElementSibling;
             if (thinkContent.classList.contains('hidden')) {
                 thinkContent.classList.remove('hidden');
@@ -453,8 +540,72 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    renderExistingMessages();
     addChatMenuListeners();
 });
+
+function renderExistingMessages() {
+    document.querySelectorAll('.prose').forEach(el => {
+        if (el.textContent.trim() === 'Canceled') return;
+
+        const rawContent = el.getAttribute('data-raw') || el.innerHTML;
+        el.innerHTML = marked.parse(rawContent);
+    });
+
+    document.querySelectorAll('.think-body').forEach(el => {
+        const rawThink = el.getAttribute('data-raw') || el.innerHTML;
+        el.innerHTML = marked.parse(rawThink);
+    });
+
+    processCodeBlocks(document);
+}
+
+function processCodeBlocks(container) {
+    container.querySelectorAll('pre code').forEach((block) => {
+        hljs.highlightElement(block);
+
+        const pre = block.parentElement;
+        if (pre.parentElement && pre.parentElement.classList.contains('code-block-wrapper')) return;
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'code-block-wrapper';
+        pre.parentNode.insertBefore(wrapper, pre);
+        wrapper.appendChild(pre);
+
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'copy-code-btn';
+        copyBtn.innerHTML = `
+            <svg viewBox="0 0 24 24">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+        `;
+
+        copyBtn.addEventListener('click', () => {
+            const code = block.innerText;
+            navigator.clipboard.writeText(code).then(() => {
+                copyBtn.classList.add('copied');
+                copyBtn.innerHTML = `
+                    <svg viewBox="0 0 24 24" stroke="#10b981">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                `;
+
+                setTimeout(() => {
+                    copyBtn.classList.remove('copied');
+                    copyBtn.innerHTML = `
+                        <svg viewBox="0 0 24 24">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                    `;
+                }, 2000);
+            });
+        });
+
+        wrapper.appendChild(copyBtn);
+    });
+}
 
 document.getElementById('deleteChatBtn').addEventListener('click', async () => {
     if (isWaiting) return;
@@ -485,12 +636,13 @@ document.getElementById('newChatBtn').addEventListener('click', async () => {
     }
 });
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const messagesContainer = document.getElementById('messages');
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 });
 
 async function deleteChat(chatId) {
+    if (isWaiting) return;
     if (confirm('Bu sohbeti silmek istediğinizden emin misiniz?')) {
         try {
             const response = await fetch('/chat/' + chatId + '/delete', {
@@ -508,29 +660,30 @@ async function deleteChat(chatId) {
     }
 }
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('.chat-menu-btn').forEach(button => {
-        button.addEventListener('click', function(e) {
+        button.addEventListener('click', function (e) {
             e.stopPropagation();
             const menu = this.nextElementSibling;
             const allMenus = document.querySelectorAll('.chat-menu');
 
             allMenus.forEach(m => {
-                if (m !== menu) m.classList.add('hidden');
+                if (m !== menu) m.classList.remove('active');
             });
 
-            menu.classList.toggle('hidden');
+            menu.classList.toggle('active');
         });
     });
 
-    document.addEventListener('click', function() {
+    document.addEventListener('click', function () {
         document.querySelectorAll('.chat-menu').forEach(menu => {
-            menu.classList.add('hidden');
+            menu.classList.remove('active');
         });
     });
 });
 
 async function renameChat(chatId) {
+    if (isWaiting) return;
     const newTitle = prompt('Yeni sohbet başlığını girin:');
     if (newTitle && newTitle.trim()) {
         try {

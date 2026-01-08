@@ -1,14 +1,84 @@
 :root {
-    --vscode-bg: #0d0d0d;
-    --vscode-sidebar: #0a0a0a;
-    --vscode-input: #121212;
-    --vscode-button: #151515;
-    --vscode-border: #1a1a1a;
-    --vscode-text: #ffffff;
-    --vscode-hover: #202020;
+    --vscode-bg: #fafafa;
+    --vscode-sidebar: #f2f2f2;
+    --vscode-input: #ffffff;
+    --vscode-button: #e8e8e8;
+    --vscode-border: #e2e2e2;
+    --vscode-text: #404040;
+    --vscode-hover: #e0e0e0;
+    --vscode-message-user: #eeeeee;
+    --vscode-message-ai: #ffffff;
+    --vscode-heading: #2d2d2d;
+    --vscode-backdrop: rgba(245, 245, 245, 0.8);
+    --vscode-btn-text: #333333;
+    --vscode-think-bg: #f3f3f3;
+    --vscode-code-bg: #f5f5f5;
+    --hljs-keyword: #a626a4;
+    --hljs-string: #50a14f;
+    --hljs-comment: #a0a1a7;
+    --hljs-function: #4078f2;
+    --hljs-variable: #986801;
+    --hljs-text: #4a4a4a;
 }
 
-body, 
+[data-theme="dark"] {
+    --vscode-bg: #0f1111;
+    --vscode-sidebar: #171919;
+    --vscode-input: #1b1d1d;
+    --vscode-button: #1b1d1d;
+    --vscode-border: #232626;
+    --vscode-text: #d4d4d4;
+    --vscode-hover: #2b2e2e;
+    --vscode-message-user: #1d1f20;
+    --vscode-message-ai: #0f1111;
+    --vscode-heading: #ededed;
+    --vscode-backdrop: rgba(0, 0, 0, 0.85);
+    --vscode-btn-text: #d4d4d4;
+    --vscode-think-bg: #0f1111;
+    --vscode-scrollbar: #333636;
+    --vscode-scrollbar-hover: #444747;
+    --vscode-code-bg: #0d0d0d;
+    --hljs-keyword: #c678dd;
+    --hljs-string: #98c379;
+    --hljs-comment: #5c6370;
+    --hljs-function: #61afef;
+    --hljs-variable: #d19a66;
+    --hljs-text: #abb2bf;
+}
+
+:root {
+    --vscode-scrollbar: #cccccc;
+    --vscode-scrollbar-hover: #bbbbbb;
+}
+
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--vscode-scrollbar);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--vscode-scrollbar-hover);
+}
+
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--vscode-scrollbar) transparent;
+}
+
+.no-transition * {
+    transition: none !important;
+}
+
+body,
 .bg-white,
 .bg-gray-100,
 .bg-gray-200,
@@ -20,28 +90,36 @@ body,
 
 #messages {
     padding: 1rem !important;
-    background-color: #0d0d0d !important;
+    background-color: var(--vscode-bg) !important;
 }
 
 .message-content {
-    max-width: min(80%, 550px);
+    max-width: min(90%, 800px);
     word-wrap: break-word;
-    margin: 0.2rem 0;
-    padding: 0.75rem;
-    font-size: 0.9rem;
-    border-radius: 4px;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    margin: 0.5rem 0 !important;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    border-radius: 8px;
+    min-width: 0;
+}
+
+.user-message,
+.ai-message {
+    display: flex !important;
+    width: 100%;
 }
 
 .user-message .message-content {
-    background-color: #1a1a1a !important;
-    border: 1px solid #2d2d2d;
-    margin-left: auto;
+    background-color: var(--vscode-message-user) !important;
+    color: var(--vscode-text) !important;
+    border: 1px solid var(--vscode-border);
 }
 
 .ai-message .message-content {
-    background-color: #0d0d0d !important;
-    border: 1px solid #1a1a1a;
-    margin-right: auto;
+    background-color: var(--vscode-message-ai) !important;
+    border: 1px solid var(--vscode-border);
 }
 
 .submit-button {
@@ -59,29 +137,33 @@ body,
     background-color: var(--vscode-hover) !important;
 }
 
-#newChatBtn {
+#newChatBtn,
+#newChatBtnMain {
     padding: 0.6rem 1.2rem !important;
     height: 40px !important;
     font-size: 1rem !important;
     background-color: var(--vscode-button) !important;
-    color: var(--vscode-text) !important;
-    border: 2px solid var(--vscode-border) !important;
-    border-radius: 6px !important;
+    color: var(--vscode-btn-text) !important;
+    border: 1px solid var(--vscode-border) !important;
+    border-radius: 8px !important;
     font-weight: 600 !important;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
-    transition: background 0.2s, border 0.2s;
-}
-#newChatBtn:hover {
-    background-color: var(--vscode-hover) !important;
-    border-color: #3d3d3d !important;
+    box-shadow: none !important;
 }
 
-input, select, textarea {
+#newChatBtn:hover,
+#newChatBtnMain:hover {
+    background-color: var(--vscode-hover) !important;
+    border-color: var(--vscode-border) !important;
+}
+
+input,
+select,
+textarea {
     background-color: var(--vscode-input) !important;
     color: var(--vscode-text) !important;
     border: 1px solid var(--vscode-border) !important;
     padding: 0.3rem 0.5rem !important;
-    height: 28px !important;
+    height: 28px;
     font-size: 0.9rem !important;
 }
 
@@ -92,18 +174,59 @@ input, select, textarea {
 }
 
 #renameDialog {
-    background-color: rgba(0, 0, 0, 0.95) !important;
+    background-color: var(--vscode-backdrop) !important;
 }
 
 #renameDialog .bg-white {
-    background-color: var(--vscode-sidebar) !important;
+    background-color: var(--vscode-bg) !important;
+    color: var(--vscode-text) !important;
     padding: 1rem !important;
+    border: 2px solid var(--vscode-border) !important;
+    border-radius: 8px !important;
 }
 
-.chat-menu {
-    background-color: var(--vscode-sidebar) !important;
-    border: 1px solid var(--vscode-border);
-    font-size: 0.85rem;
+#renameDialog h3 {
+    color: var(--vscode-text) !important;
+}
+
+#confirmRenameBtn {
+    background-color: var(--vscode-hover) !important;
+    color: var(--vscode-text) !important;
+    border: 1px solid var(--vscode-border) !important;
+}
+
+
+#cancelRenameBtn {
+    background-color: transparent !important;
+    color: var(--vscode-text) !important;
+    border: 1px solid var(--vscode-border) !important;
+}
+
+#cancelRenameBtn:hover {
+    background-color: var(--vscode-hover) !important;
+}
+
+.chat-menu button {
+    color: var(--vscode-text) !important;
+}
+
+.chat-menu-btn {
+    color: var(--vscode-text) !important;
+    opacity: 0.7;
+}
+
+.chat-menu-btn:hover {
+    opacity: 1;
+    background-color: var(--vscode-hover) !important;
+    border-radius: 4px;
+}
+
+.chat-menu button:hover {
+    background-color: var(--vscode-hover) !important;
+}
+
+.chat-menu button:last-child {
+    color: #ef4444 !important;
 }
 
 .bg-blue-600,
@@ -111,11 +234,219 @@ input, select, textarea {
 .bg-gray-100,
 .hover\:bg-gray-100:hover {
     background-color: var(--vscode-button) !important;
+    color: var(--vscode-btn-text) !important;
 }
 
 .prose {
     color: var(--vscode-text) !important;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    max-width: 100%;
+}
+
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4 {
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+    line-height: 1.25;
+}
+
+.prose h1 {
+    font-size: 1.5rem;
+    border-bottom: 1px solid var(--vscode-border);
+    padding-bottom: 0.3rem;
+}
+
+.prose h2 {
+    font-size: 1.25rem;
+    border-bottom: 1px solid var(--vscode-border);
+    padding-bottom: 0.2rem;
+}
+
+.prose h3 {
+    font-size: 1.1rem;
+}
+
+.prose p {
+    margin-bottom: 1rem;
+}
+
+.prose p:last-child,
+.prose ul:last-child,
+.prose ol:last-child,
+.prose pre:last-child,
+.prose blockquote:last-child,
+.prose table:last-child,
+.code-block-wrapper:last-child {
+    margin-bottom: 0px !important;
+}
+
+.prose code {
+    background-color: var(--vscode-hover);
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 0.85em;
+}
+
+.prose pre {
+    background-color: var(--vscode-code-bg) !important;
+    border: 1px solid var(--vscode-border);
+    border-radius: 6px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    overflow-x: auto;
+    position: relative;
+}
+
+.code-block-wrapper {
+    position: relative;
+    margin-bottom: 1rem;
+}
+
+.code-block-wrapper pre {
+    margin-bottom: 0;
+}
+
+.copy-code-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    padding: 4px;
+    background: var(--vscode-button);
+    border: 1px solid var(--vscode-border);
+    border-radius: 4px;
+    color: var(--vscode-text);
+    cursor: pointer;
+    opacity: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+}
+
+.code-block-wrapper:hover .copy-code-btn {
+    opacity: 1;
+}
+
+.copy-code-btn:hover {
+    background: var(--vscode-hover);
+    border-color: var(--vscode-text);
+}
+
+.copy-code-btn svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.copy-code-btn.copied {
+    color: #10b981;
+    border-color: #10b981;
+}
+
+.prose pre code.hljs {
+    color: var(--hljs-text);
+    padding: 0;
+    display: block;
+    line-height: 1.5;
+    background: transparent !important;
+}
+
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-attr,
+.hljs-tag {
+    color: var(--hljs-keyword);
+}
+
+.hljs-string,
+.hljs-title,
+.hljs-section,
+.hljs-built_in,
+.hljs-type,
+.hljs-literal {
+    color: var(--hljs-string);
+}
+
+.hljs-comment,
+.hljs-quote {
+    color: var(--hljs-comment);
+    font-style: italic;
+}
+
+.hljs-function,
+.hljs-number {
+    color: var(--hljs-function);
+}
+
+.hljs-params,
+.hljs-variable {
+    color: var(--hljs-variable);
+}
+
+.prose ul,
+.prose ol {
+    margin-bottom: 1rem;
+    padding-left: 1.5rem;
+}
+
+.prose ul {
+    list-style-type: disc;
+}
+
+.prose ol {
+    list-style-type: decimal;
+}
+
+.prose li {
+    margin-bottom: 0.5rem;
+}
+
+.prose blockquote {
+    border-left: 4px solid var(--vscode-border);
+    padding-left: 1rem;
+    color: var(--vscode-text);
+    opacity: 0.8;
+    font-style: italic;
+    margin-bottom: 1rem;
+}
+
+.prose table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1rem;
+}
+
+.prose th,
+.prose td {
+    border: 1px solid var(--vscode-border);
+    padding: 0.5rem;
+    text-align: left;
+}
+
+.prose th {
+    background-color: var(--vscode-hover);
+}
+
+.prose a {
+    color: #3b82f6;
+    text-decoration: underline;
+}
+
+.prose a:hover {
+    color: #2563eb;
 }
 
 .border,
@@ -126,7 +457,10 @@ input, select, textarea {
     border-color: var(--vscode-border) !important;
 }
 
-.flex, .flex-1, .justify-start, .justify-end {
+.flex,
+.flex-1,
+.justify-start,
+.justify-end {
     background-color: transparent !important;
 }
 
@@ -135,93 +469,191 @@ input, select, textarea {
     background-color: transparent !important;
 }
 
-.bg-white, .bg-gray-100, .bg-gray-200 {
+.bg-white,
+.bg-gray-50,
+.bg-gray-100,
+.bg-gray-200 {
     background-color: var(--vscode-bg) !important;
 }
 
-.message-wrapper + .message-wrapper {
+.text-gray-800,
+.text-gray-700,
+.text-gray-600 {
+    color: var(--vscode-text) !important;
+}
+
+.message-wrapper+.message-wrapper {
     margin-top: 0.5rem;
 }
 
 .text-xl.font-semibold.text-gray-800,
 h1.text-xl.font-semibold {
-    color: #ffffff !important;
+    color: var(--vscode-heading) !important;
 }
 
-h1, h2, h3, h4, h5, h6 {
-    color: #ffffff !important;
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    color: var(--vscode-heading) !important;
 }
 
 .text-gray-400.uppercase.text-xs.font-semibold {
-    color: #ffffff !important;
-}
-
-.bg-white.border-t {
-    padding: 1rem !important;
-    background-color: #0d0d0d !important;
-    border-top: 1px solid #2d2d2d !important;
-}
-
-input#messageInput,
-textarea#messageInput {
-    min-height: 45px !important;
-    max-height: 45px !important;
-    height: 45px !important;
-    font-size: 0.95rem !important;
-    padding: 8px 16px !important;
-    background-color: #0d0d0d !important;
-    color: #ffffff !important;
-    border: 1px solid #2d2d2d !important;
-    border-radius: 4px !important;
-    resize: none !important;
-    width: calc(100% - 100px) !important;
-    line-height: 28px !important;
-    display: flex !important;
-    align-items: center !important;
-    overflow-y: hidden !important;
-    margin: 0 !important;
-}
-
-input:focus, select:focus, textarea:focus {
-    outline: none !important;
-    border-color: #3d3d3d !important;
-    box-shadow: none !important;
-}
-
-.submit-button {
-    min-width: 80px !important;
-    height: 45px !important;
-    padding: 0.75rem 1rem !important;
-    background-color: #0d0d0d !important;
-    color: #ffffff !important;
-    border: 1px solid #2d2d2d !important;
-    font-size: 1rem !important;
-    font-weight: 500 !important;
-    border-radius: 4px !important;
-    transition: background-color 0.2s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-.submit-button:hover {
-    background-color: #1a1a1a !important;
-}
-
-.submit-button:active {
-    background-color: #0d0d0d !important;
-}
-
-.submit-button:disabled {
-    background-color: #0a0a0a !important;
-    cursor: not-allowed;
+    color: var(--vscode-text) !important;
     opacity: 0.7;
+}
+
+.input-area-wrapper {
+    padding: 0.5rem 1.5rem 1.5rem 1.5rem;
+    background-color: var(--vscode-bg);
+    flex-shrink: 0;
+}
+
+.input-area-container {
+    background-color: var(--vscode-message-user) !important;
+    border: 1px solid var(--vscode-border) !important;
+    border-radius: 12px !important;
+    padding: 0.75rem 1rem !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
 #messageForm {
     display: flex !important;
-    gap: 0.75rem !important;
+    flex-direction: column !important;
+    gap: 0 !important;
+    padding: 0 !important;
+    height: auto !important;
+}
+
+textarea#messageInput {
+    width: 100% !important;
+    min-height: 40px !important;
+    max-height: 30vh !important;
+    height: auto;
+    font-size: 1rem !important;
+    padding: 8px 0 !important;
+    background-color: transparent !important;
+    color: var(--vscode-text) !important;
+    border: none !important;
+    outline: none !important;
+    resize: none !important;
+    line-height: 1.5 !important;
+    white-space: pre-wrap !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+    width: 100% !important;
+    display: block !important;
+    margin: 0 !important;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: var(--vscode-scrollbar) transparent;
+}
+
+textarea#messageInput::-webkit-scrollbar {
+    width: 5px;
+}
+
+textarea#messageInput::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+textarea#messageInput::-webkit-scrollbar-thumb {
+    background: var(--vscode-scrollbar);
+    border-radius: 10px;
+}
+
+textarea#messageInput:focus {
+    outline: none !important;
+    border: none !important;
+}
+
+textarea#messageInput::placeholder {
+    opacity: 0.5;
+    font-style: italic;
+}
+
+.submit-button {
+    width: 32px !important;
+    min-width: 32px !important;
+    height: 32px !important;
+    padding: 0 !important;
+    background-color: var(--vscode-button) !important;
+    color: var(--vscode-text) !important;
+    border: 1px solid var(--vscode-border) !important;
+    border-radius: 8px !important;
+    cursor: pointer;
+    display: flex !important;
     align-items: center !important;
-    padding: 0.5rem !important;
+    justify-content: center !important;
+    transition: none !important;
+}
+
+.submit-button:hover {
+    background-color: var(--vscode-hover) !important;
+    border-color: var(--vscode-text) !important;
+}
+
+.submit-button svg {
+    width: 18px;
+    height: 18px;
+}
+
+.input-controls-wrapper {
+    border-top: 1px solid var(--vscode-border);
+    padding-top: 0.75rem;
+    margin-top: 0.25rem;
+}
+
+#modelSelector {
+    height: 28px !important;
+    padding: 0 8px !important;
+    font-size: 0.8rem !important;
+    background-color: var(--vscode-bg) !important;
+    border: 1px solid var(--vscode-border) !important;
+    border-radius: 6px !important;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    outline: none !important;
+    border-color: var(--vscode-border) !important;
+    box-shadow: none !important;
+}
+
+.submit-button {
+    width: 36px !important;
+    min-width: 36px !important;
+    height: 36px !important;
+    padding: 0 !important;
+    background-color: #3b82f6 !important;
+    color: white !important;
+    border: none !important;
+    font-size: 0.85rem !important;
+    font-weight: 600 !important;
+    border-radius: 50% !important;
+    cursor: pointer;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.submit-button:hover {
+    background-color: #2563eb !important;
+}
+
+.submit-button svg {
+    width: 20px;
+    height: 20px;
+}
+
+.submit-button:disabled {
+    background-color: var(--vscode-hover) !important;
+    color: var(--vscode-text) !important;
+    cursor: not-allowed;
+    opacity: 0.6;
 }
 
 .submit-button .loading-dots {
@@ -239,7 +671,7 @@ input:focus, select:focus, textarea:focus {
 .loading-dots .dot {
     width: 8px;
     height: 8px;
-    background-color: #ffffff;
+    background-color: var(--vscode-text);
     border-radius: 50%;
     animation: bounce 0.5s ease-in-out infinite;
 }
@@ -253,10 +685,13 @@ input:focus, select:focus, textarea:focus {
 }
 
 @keyframes bounce {
-    0%, 100% {
+
+    0%,
+    100% {
         transform: translateY(0);
         opacity: 0.3;
     }
+
     50% {
         transform: translateY(-4px);
         opacity: 1;
@@ -270,76 +705,243 @@ input:focus, select:focus, textarea:focus {
 }
 
 .ai-typing .message-content {
-    background-color: #0d0d0d !important;
-    border: 1px solid #1a1a1a;
+    background-color: var(--vscode-message-ai) !important;
+    border: 1px solid var(--vscode-border);
     padding: 0.5rem 1rem;
 }
 
-#chatList > div.flex.items-center {
+.think-content {
+    background-color: var(--vscode-think-bg) !important;
+    color: var(--vscode-text) !important;
+    border: 1px solid var(--vscode-border);
+}
+
+#chatList>div.flex.items-center {
     min-height: 28px;
     font-size: 0.8rem;
     border: 2px solid var(--vscode-border);
     border-radius: 4px;
     margin-bottom: 0.18rem;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    box-shadow: none !important;
     background-color: unset !important;
     padding-top: 0.1rem;
     padding-bottom: 0.1rem;
     padding-left: 0.1rem;
     padding-right: 0.1rem;
-    transition: border 0.2s, background 0.2s;
 }
-#chatList > div.flex.items-center.bg-gray-700 {
+
+#chatList>div.flex.items-center.bg-gray-700 {
     position: relative;
-    background-color: #2d2d2d !important;
-    border-color: #444 !important;
+    background-color: var(--vscode-hover) !important;
+    border-color: var(--vscode-border) !important;
     border-width: 2px;
     box-shadow: none;
-    color: #fff !important;
+    color: var(--vscode-text) !important;
     font-weight: 700;
     z-index: 2;
-    filter: brightness(1.18) contrast(1.08);
 }
-#chatList > div.flex.items-center.bg-gray-700 a {
+
+#chatList>div.flex.items-center.bg-gray-700 a {
     color: #fff !important;
     font-weight: 700;
 }
-#chatList > div.flex.items-center.bg-gray-700::before {
+
+#chatList>div.flex.items-center.bg-gray-700::before {
     display: none;
 }
-#chatList > div.flex.items-center:hover {
-    background-color: #232323 !important;
-    border-color: #3d3d3d !important;
+
+#chatList>div.flex.items-center:hover {
+    background-color: var(--vscode-hover) !important;
+    border-color: var(--vscode-border) !important;
 }
+
 #chatList a {
     font-weight: 400;
     font-size: 0.8rem;
     padding-top: 0.2rem;
     padding-bottom: 0.2rem;
+    color: var(--vscode-text) !important;
 }
 
 #messageForm label[for="modelSelector"] {
-    color: #b0b0b0 !important;
+    color: var(--vscode-text) !important;
+    opacity: 0.8;
     font-size: 0.85rem !important;
     margin-right: 0.3rem !important;
     font-weight: 500;
     padding: 0;
 }
-#modelSelector {
-    background-color: var(--vscode-input) !important;
-    color: var(--vscode-text) !important;
-    border: 1px solid #3d3d3d !important;
-    border-radius: 4px !important;
-    font-size: 0.85rem !important;
-    height: 28px !important;
-    min-width: 80px !important;
-    max-width: 140px !important;
-    padding: 0 0.5rem !important;
-    margin-right: 0.5rem !important;
-    box-shadow: none !important;
+
+.custom-dropdown {
+    position: relative;
+    min-width: 140px;
+    z-index: 50;
 }
-#modelSelector:focus {
-    outline: none !important;
-    border-color: #3d3d3d !important;
+
+.dropdown-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 0.4rem 0.75rem;
+    background-color: var(--vscode-bg) !important;
+    border: 1px solid var(--vscode-border) !important;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    color: var(--vscode-text);
+    cursor: pointer;
+}
+
+.dropdown-trigger:hover {
+    background-color: var(--vscode-hover) !important;
+}
+
+
+.custom-dropdown.active .dropdown-trigger svg {
+    transform: rotate(180deg);
+}
+
+.dropdown-menu {
+    position: absolute;
+    bottom: calc(100% + 10px);
+    left: 0;
+    width: 220px;
+    max-height: 300px;
+    background-color: var(--vscode-bg);
+    border: 1px solid var(--vscode-border);
+    border-radius: 12px;
     box-shadow: none !important;
+    overflow-y: auto;
+    opacity: 0;
+    visibility: hidden;
+    padding: 0.5rem;
+}
+
+.custom-dropdown.active .dropdown-menu {
+    opacity: 1;
+    visibility: visible;
+}
+
+.dropdown-group-label {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--vscode-text);
+    opacity: 0.5;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 0.75rem;
+    font-size: 0.85rem;
+    color: var(--vscode-text);
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.dropdown-item:hover {
+    background-color: var(--vscode-hover);
+}
+
+.dropdown-item.selected {
+    background-color: var(--vscode-button);
+    font-weight: 600;
+}
+
+.dropdown-item .check-icon {
+    color: #10b981;
+    width: 14px;
+    height: 14px;
+}
+
+#chatContextMenu {
+    background-color: var(--vscode-sidebar) !important;
+    border: 1px solid var(--vscode-border) !important;
+    box-shadow: none !important;
+    border-radius: 8px !important;
+    opacity: 0;
+    visibility: hidden;
+}
+
+#chatContextMenu.active,
+#chatDropdownMenu.active {
+    opacity: 1;
+    visibility: visible;
+    display: block !important;
+}
+
+#chatDropdownMenu {
+    background-color: var(--vscode-sidebar) !important;
+    border: 1px solid var(--vscode-border) !important;
+    box-shadow: none !important;
+    border-radius: 8px !important;
+    opacity: 0;
+    visibility: hidden;
+}
+
+.chat-menu {
+    border: 1px solid var(--vscode-border);
+    opacity: 0;
+    visibility: hidden;
+    z-index: 100;
+}
+
+.chat-menu.active {
+    opacity: 1;
+    visibility: visible;
+    display: block !important;
+}
+
+#chatContextMenu button,
+#chatDropdownMenu button {
+    color: var(--vscode-text) !important;
+}
+
+#chatContextMenu button:hover,
+#chatDropdownMenu button:hover {
+    background-color: var(--vscode-hover) !important;
+}
+
+#chatContextMenu button:last-child,
+#chatDropdownMenu button:last-child {
+    color: #ef4444 !important;
+}
+
+.waiting-state {
+    pointer-events: none !important;
+    opacity: 0.6 !important;
+    cursor: not-allowed !important;
+}
+
+.waiting-state a,
+.waiting-state button {
+    pointer-events: none !important;
+}
+
+.theme-toggle-container {
+    margin-top: auto;
+    padding-top: 1rem;
+    border-top: 1px solid var(--vscode-border);
+}
+
+.theme-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    padding: 0.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+.theme-btn:hover {
+    background-color: var(--vscode-hover);
+}
+
+.theme-btn svg {
+    margin-right: 0.5rem;
 }

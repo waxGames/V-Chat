@@ -1,127 +1,322 @@
-import json
+import sqlite3
 import os
 import shutil
 from datetime import datetime
-from helpers.config import DATA_FILE, INSTALL_PATH
+from helpers.config import DATA_FILE, INSTALL_PATH, USER_DATA_PATH
 
 def ensure_data_directory():
     try:
-        if not os.path.exists(INSTALL_PATH):
-            os.makedirs(INSTALL_PATH, exist_ok=True)
+        db_dir = os.path.dirname(DATA_FILE)
+        if not os.path.exists(db_dir):
+            os.makedirs(db_dir, exist_ok=True)
         return True
     except Exception as e:
         print(f"Directory creation error: {str(e)}")
         return False
 
-def load_chats():
+def get_db_connection():
+    if not ensure_data_directory():
+        return None
     try:
-        if not ensure_data_directory():
-            return {"chats": {}}
+        conn = sqlite3.connect(DATA_FILE)
+        conn.execute("PRAGMA foreign_keys = ON")
+        conn.execute("PRAGMA journal_mode = WAL")
+        conn.execute("PRAGMA synchronous = NORMAL")
+        conn.row_factory = sqlite3.Row
+        return conn
+    except Exception as e:
+        print(f"Database connection error: {str(e)}")
+        return None
+
+def init_db():
+    conn = get_db_connection()
+    if conn:
+        try:
+            cursor = conn.cursor()
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS chats (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id TEXT NOT NULL,
+                    chat_id TEXT NOT NULL UNIQUE,
+                    title TEXT NOT NULL,
+                    created_at TEXT NOT NULL,
+                    last_updated TEXT NOT NULL,
+                    current_model TEXT
+                )
+            ''')
+            cursor.executescript('''
+                CREATE TABLE IF NOT EXISTS messages (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    chat_id TEXT NOT NULL,
+                    sender TEXT NOT NULL,
+                    content TEXT NOT NULL,
+                    timestamp TEXT NOT NULL,
+                    model TEXT,
+                    canceled BOOLEAN DEFAULT 0,
+                    think TEXT,
+                    has_think BOOLEAN DEFAULT 0,
+                    FOREIGN KEY (chat_id) REFERENCES chats (chat_id) ON DELETE CASCADE
+                );
+                CREATE INDEX IF NOT EXISTS idx_chats_user_id ON chats(user_id);
+                CREATE INDEX IF NOT EXISTS idx_chats_last_updated ON chats(last_updated DESC);
+                CREATE INDEX IF NOT EXISTS idx_messages_chat_id ON messages(chat_id);
+                CREATE INDEX IF NOT EXISTS idx_messages_timestamp ON messages(timestamp ASC);
+            ''')
+            conn.commit()
             
-        if not os.path.exists(DATA_FILE):
-            print(f"Data file not found, creating new one: {DATA_FILE}")
-            with open(DATA_FILE, 'w', encoding='utf-8') as f:
-                json.dump({"chats": {}}, f, ensure_ascii=False)
-            return {"chats": {}}
+            old_data_file = os.path.join(INSTALL_PATH, "chats.json")
+            if os.path.exists(old_data_file):
+                import json
+                try:
+                    with open(old_data_file, 'r', encoding='utf-8') as f:
+                        old_data = json.load(f)
+                    
+                    chats_dict = old_data.get('chats', {})
+                    for user_id, user_chats in chats_dict.items():
+                        for chat_id, chat in user_chats.items():
+                            cursor.execute('''
+                                INSERT OR IGNORE INTO chats (user_id, chat_id, title, created_at, last_updated, current_model)
+                                VALUES (?, ?, ?, ?, ?, ?)
+                            ''', (
+                                user_id, 
+                                chat_id, 
+                                chat.get('title', 'New Chat'), 
+                                chat.get('created_at', datetime.now().isoformat()),
+                                chat.get('last_updated', datetime.now().isoformat()),
+                                chat.get('current_model')
+                            ))
+                            
+                            for msg in chat.get('messages', []):
+                                cursor.execute('''
+                                    INSERT INTO messages (chat_id, sender, content, timestamp, model, canceled)
+                                    VALUES (?, ?, ?, ?, ?, ?)
+                                ''', (
+                                    chat_id,
+                                    msg.get('sender', 'user'),
+                                    msg.get('content', ''),
+                                    msg.get('timestamp', datetime.now().isoformat()),
+                                    msg.get('model'),
+                                    1 if msg.get('canceled') else 0
+                                ))
+                    conn.commit()
+                    os.rename(old_data_file, old_data_file + ".migrated")
+                except Exception as e:
+                    print(f"Migration error: {str(e)}")
+            try:
+                cursor.execute("ALTER TABLE messages ADD COLUMN think TEXT")
+            except:
+                pass
+            try:
+                cursor.execute("ALTER TABLE messages ADD COLUMN has_think BOOLEAN DEFAULT 0")
+            except:
+                pass
+
+            try:
+                cursor.execute("UPDATE chats SET user_id = 'local_user' WHERE user_id != 'local_user' OR user_id IS NULL")
+            except:
+                pass
                 
-        backup_file = f"{DATA_FILE}.bak"
-        shutil.copy2(DATA_FILE, backup_file)
-        
-        with open(DATA_FILE, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-            if not isinstance(data, dict) or 'chats' not in data:
-                print("Invalid data format, restoring from backup")
-                if os.path.exists(backup_file):
-                    shutil.copy2(backup_file, DATA_FILE)
-                    with open(DATA_FILE, 'r', encoding='utf-8') as f:
-                        data = json.load(f)
-                else:
-                    data = {"chats": {}}
-            return data
-    except Exception as e:
-        print(f"Data loading error: {str(e)}")
-        backup_file = f"{DATA_FILE}.bak"
-        if os.path.exists(backup_file):
-            try:
-                shutil.copy2(backup_file, DATA_FILE)
-                with open(DATA_FILE, 'r', encoding='utf-8') as f:
-                    return json.load(f)
-            except:
-                pass
-        return {"chats": {}}
+            conn.commit()
+        except Exception as e:
+            print(f"Database initialization error: {str(e)}")
+        finally:
+            conn.close()
 
-def save_chats(data):
+init_db()
+
+def get_all_chats_metadata(user_id='local_user'):
+    conn = get_db_connection()
+    if not conn:
+        return []
+    
     try:
-        if not ensure_data_directory():
-            return False
-            
-        temp_file = f"{DATA_FILE}.tmp"
-        with open(temp_file, 'w', encoding='utf-8') as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
-        
-        if os.path.exists(DATA_FILE):
-            backup_file = f"{DATA_FILE}.bak"
-            shutil.copy2(DATA_FILE, backup_file)
-        
-        shutil.move(temp_file, DATA_FILE)
-        return True
+        cursor = conn.cursor()
+        cursor.execute('SELECT id, chat_id, title, last_updated, current_model FROM chats ORDER BY last_updated DESC')
+        rows = cursor.fetchall()
+        return [dict(row) for row in rows]
     except Exception as e:
-        print(f"Data saving error: {str(e)}")
-        if os.path.exists(temp_file):
-            try:
-                os.remove(temp_file)
-            except:
-                pass
-        return False
+        print(f"Error fetching chat metadata: {str(e)}")
+        return []
+    finally:
+        conn.close()
 
-def get_user_chats(user_id):
-    data = load_chats()
-    return data.get('chats', {}).get(user_id, {})
+def get_chat_with_messages(chat_id):
+    conn = get_db_connection()
+    if not conn:
+        return None
+    
+    try:
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM chats WHERE chat_id = ?', (chat_id,))
+        chat_row = cursor.fetchone()
+        
+        if not chat_row:
+            return None
+            
+        chat_data = dict(chat_row)
+        chat_data['messages'] = []
+        
+        cursor.execute('SELECT * FROM messages WHERE chat_id = ? ORDER BY timestamp ASC', (chat_id,))
+        messages_rows = cursor.fetchall()
+        for msg_row in messages_rows:
+            chat_data['messages'].append({
+                'sender': msg_row['sender'],
+                'content': msg_row['content'],
+                'timestamp': msg_row['timestamp'],
+                'model': msg_row['model'],
+                'canceled': bool(msg_row['canceled']),
+                'think': msg_row['think'],
+                'has_think': bool(msg_row['has_think'])
+            })
+            
+        return chat_data
+    except Exception as e:
+        print(f"Error fetching chat with messages: {str(e)}")
+        return None
+    finally:
+        conn.close()
+
+def get_user_chats(user_id=None):
+    metadata = get_all_chats_metadata()
+    result = {}
+    for chat in metadata:
+        chat_id = chat['chat_id']
+        result[chat_id] = {
+            'title': chat['title'],
+            'last_updated': chat['last_updated'],
+            'current_model': chat.get('current_model'),
+            'messages': [] 
+        }
+    return result
 
 def create_chat(user_id, chat_id, title="New Chat"):
-    data = load_chats()
-    if user_id not in data['chats']:
-        data['chats'][user_id] = {}
-    
-    timestamp = datetime.now().isoformat()
-    data['chats'][user_id][chat_id] = {
-        'title': title,
-        'messages': [],
-        'created_at': timestamp,
-        'last_updated': timestamp
-    }
-    
-    return save_chats(data)
-
-def add_message(user_id, chat_id, message, sender='user', model=None):
-    data = load_chats()
-    if user_id not in data['chats'] or chat_id not in data['chats'][user_id]:
+    conn = get_db_connection()
+    if not conn:
         return False
     
-    timestamp = datetime.now().isoformat()
-    data['chats'][user_id][chat_id]['messages'].append({
-        'sender': sender,
-        'content': message,
-        'timestamp': timestamp,
-        'model': model
-    })
+    try:
+        timestamp = datetime.now().isoformat()
+        cursor = conn.cursor()
+        cursor.execute('''
+            INSERT INTO chats (user_id, chat_id, title, created_at, last_updated)
+            VALUES (?, ?, ?, ?, ?)
+        ''', (user_id, chat_id, title, timestamp, timestamp))
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f"Error creating chat: {str(e)}")
+        return False
+    finally:
+        conn.close()
+
+def add_message(user_id, chat_id, message, sender='user', model=None, canceled=False, think=None, has_think=False):
+    conn = get_db_connection()
+    if not conn:
+        return False
     
-    data['chats'][user_id][chat_id]['last_updated'] = timestamp
-    if model:
-        data['chats'][user_id][chat_id]['current_model'] = model
-    
-    return save_chats(data)
+    try:
+        timestamp = datetime.now().isoformat()
+        cursor = conn.cursor()
+        
+        cursor.execute('SELECT id FROM chats WHERE chat_id = ?', (chat_id,))
+        if not cursor.fetchone():
+            return False
+            
+        cursor.execute('''
+            INSERT INTO messages (chat_id, sender, content, timestamp, model, canceled, think, has_think)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (chat_id, sender, message, timestamp, model, 1 if canceled else 0, think, 1 if has_think else 0))
+        
+        if model:
+            cursor.execute('''
+                UPDATE chats SET last_updated = ?, current_model = ? WHERE chat_id = ?
+            ''', (timestamp, model, chat_id))
+        else:
+            cursor.execute('''
+                UPDATE chats SET last_updated = ? WHERE chat_id = ?
+            ''', (timestamp, chat_id))
+            
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f"Error adding message: {str(e)}")
+        return False
+    finally:
+        conn.close()
 
 def delete_chat(user_id, chat_id):
-    data = load_chats()
-    if user_id in data['chats'] and chat_id in data['chats'][user_id]:
-        del data['chats'][user_id][chat_id]
-        return save_chats(data)
-    return False
+    conn = get_db_connection()
+    if not conn:
+        return False
+    
+    try:
+        cursor = conn.cursor()
+        cursor.execute('DELETE FROM messages WHERE chat_id = ?', (chat_id,))
+        cursor.execute('DELETE FROM chats WHERE chat_id = ?', (chat_id,))
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f"Error deleting chat: {str(e)}")
+        return False
+    finally:
+        conn.close()
 
 def rename_chat(user_id, chat_id, new_title):
-    data = load_chats()
-    if user_id in data['chats'] and chat_id in data['chats'][user_id]:
-        data['chats'][user_id][chat_id]['title'] = new_title
-        return save_chats(data)
-    return False
+    conn = get_db_connection()
+    if not conn:
+        return False
+    
+    try:
+        cursor = conn.cursor()
+        cursor.execute('''
+            UPDATE chats SET title = ? WHERE chat_id = ?
+        ''', (new_title, chat_id))
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f"Error renaming chat: {str(e)}")
+        return False
+    finally:
+        conn.close()
+
+def get_recent_chats_context(user_id, exclude_chat_id, limit=3, msg_limit=5):
+    conn = get_db_connection()
+    if not conn:
+        return []
+    
+    try:
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT chat_id, title FROM chats 
+            WHERE user_id = ? AND chat_id != ? 
+            ORDER BY last_updated DESC LIMIT ?
+        ''', (user_id, exclude_chat_id, limit))
+        
+        chats = cursor.fetchall()
+        context_data = []
+        
+        for chat in chats:
+            c_id = chat['chat_id']
+            title = chat['title']
+            
+            cursor.execute('''
+                SELECT sender, content FROM messages 
+                WHERE chat_id = ? 
+                ORDER BY timestamp DESC LIMIT ?
+            ''', (c_id, msg_limit))
+            
+            msgs = cursor.fetchall()
+            if msgs:
+                chat_context = f"--- Previous Chat: {title} ---\n"
+                for m in reversed(msgs):
+                    role = "User" if m['sender'] == 'user' else "AI"
+                    content = m['content'][:200] + "..." if len(m['content']) > 200 else m['content']
+                    chat_context += f"{role}: {content}\n"
+                context_data.append(chat_context)
+                
+        return context_data
+    except Exception as e:
+        print(f"Error fetching recent chats context: {str(e)}")
+        return []
+    finally:
+        conn.close()

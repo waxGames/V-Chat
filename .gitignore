@@ -1,4 +1,4 @@
-# Python
+# Python dependencies
 __pycache__/
 *.py[cod]
 *$py.class
@@ -20,37 +20,34 @@ wheels/
 .installed.cfg
 *.egg
 
-# Virtual Environment
+# Virtual environments
 venv/
 env/
 ENV/
+.venv/
 
-# IDE
+# IDE files
 .idea/
 .vscode/
 *.swp
 *.swo
 
-# Logs
+# Project specific
 *.log
+*.db
+*.sqlite3
+chats.json*
 
-# Local data
-chats.json
-chats.json.bak
-chats.json.tmp
-
-# Windows
+# OS specific
 Thumbs.db
 ehthumbs.db
 Desktop.ini
 $RECYCLE.BIN/
-
-# macOS
 .DS_Store
 .AppleDouble
 .LSOverride
 ._*
 
-# Temporary files
+# Misc
 *.tmp
-*.bak 
+*.bak

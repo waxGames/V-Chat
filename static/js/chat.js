@@ -693,10 +693,10 @@ async function deleteChat(chatId) {
             if (data.success) {
                 window.location.href = data.redirect;
             } else {
-                alert('Sohbet silinirken bir hata oluştu: ' + data.error);
+                alert('An error occurred while deleting the chat: ' + data.error);
             }
         } catch (error) {
-            alert('Bir hata oluştu: ' + error.message);
+            alert('An error occurred: ' + error.message);
         }
     }
 }
@@ -741,10 +741,10 @@ async function renameChat(chatId) {
             if (data.success) {
                 window.location.reload();
             } else {
-                alert('Başlık güncellenirken bir hata oluştu: ' + data.error);
+                alert('An error occurred while updating the title: ' + data.error);
             }
         } catch (error) {
-            alert('Bir hata oluştu: ' + error.message);
+            alert('An error occurred: ' + error.message);
         }
     }
 }

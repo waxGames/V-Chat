@@ -1,4 +1,4 @@
-# V-Chat (v2.0)
+# vChat (v2.0)
 
 V-Chat is a modern, privacy-focused, and locally-hosted AI chat interface. Powered by **Ollama**, it ensures your data remains entirely on your machine while providing a high-performance experience with models like DeepSeek, Llama, and Mistral.
 
@@ -57,3 +57,4 @@ V-Chat/
 
 ---
 *V-Chat: Your personal, secure AI companion.*
+

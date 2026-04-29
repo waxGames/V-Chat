@@ -51,7 +51,7 @@ V-Chat/
 - **Database:** SQLite
 
 ## Important Notes
-- The application runs on port **5000** by default.
+- The application runs on port **5335** by default.
 - On Windows, if administrative privileges are required (e.g., for Program Files access), the app will automatically request UAC approval.
 - Chat data is stored locally in the `%LocalAppData%/V-Chat` directory.
 
